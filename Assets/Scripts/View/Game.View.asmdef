@@ -1,0 +1,22 @@
+{
+    "name": "Game.View",
+    "rootNamespace": "Game.View",
+    "references": [
+        "Game.Core",
+        "Game.Config",
+        "UniTask",
+        "UniTask.DOTween",
+        "DOTween.Modules",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

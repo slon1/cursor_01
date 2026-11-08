@@ -1,0 +1,83 @@
+J:\work\Marit King\Assets\Sprites\icon_background.png - адаптивная иконка приложения (background)
+J:\work\Marit King\Assets\Sprites\icon_foreground.png - адаптивная иконка приложения (foreground)
+J:\work\Marit King\Assets\Sprites\push_large_icon.png - иконка приложения
+J:\work\Marit King\Assets\Sprites\Game\active-cell.png - спрайт подсветки доступной для хода клетки. 
+J:\work\Marit King\Assets\Sprites\Game\active-cell_2.png - спрайт подсветки доступной для прыжка клетки. 
+J:\work\Marit King\Assets\Sprites\Game\button-EXTRACT-lock.png - "серая кнопка" EXTRACT (выход с уровня не доступен,условия не выполняются.)
+J:\work\Marit King\Assets\Sprites\Game\button-EXTRACT.png - "золотая кнопка" EXTRACT (выход с уровня доступен, условия выполняются.)
+J:\work\Marit King\Assets\Sprites\Game\button-pause.png - кнопка паузы
+J:\work\Marit King\Assets\Sprites\Game\Frame-alarm.png - фрейм уроаня тревоги.
+J:\work\Marit King\Assets\Sprites\Game\Game-bg.png - background игры
+J:\work\Marit King\Assets\Sprites\Game\player-blue-big-active.png - Иконка выбора льва А активная
+J:\work\Marit King\Assets\Sprites\Game\player-blue-big-inactive.png - иконка выбора льва А пассивная
+J:\work\Marit King\Assets\Sprites\Game\player-blue-small.png - игровой элемент лев А
+J:\work\Marit King\Assets\Sprites\Game\player-gold-big-active.png - Иконка выбора льва Б активная
+J:\work\Marit King\Assets\Sprites\Game\player-gold-big-inactive.png - иконка выбора льва Б пассивная
+J:\work\Marit King\Assets\Sprites\Game\player-gold-small.png - игровой элемент лев Б
+J:\work\Marit King\Assets\Sprites\Game\progress-bar-frame.png - шкала заполнения тревоги.
+J:\work\Marit King\Assets\Sprites\Game\progressbar-active.png - заполнитель шкалы тревоги.
+J:\work\Marit King\Assets\Sprites\Game\cell\Property 1=cage.png - игровой элемент решетка.
+J:\work\Marit King\Assets\Sprites\Game\cell\Property 1=chest.png - игровой элемент сундук
+J:\work\Marit King\Assets\Sprites\Game\cell\Property 1=coin.png - игровой элемент 
+J:\work\Marit King\Assets\Sprites\Game\cell\Property 1=exit.png - игровой элемент  выход 
+J:\work\Marit King\Assets\Sprites\Game\cell\Property 1=lock.png - закрытая клетка
+J:\work\Marit King\Assets\Sprites\Game\cell\Property 1=spades.png - игровой элемент ловушка
+J:\work\Marit King\Assets\Sprites\Game\cell\Property 1=switch.png - рубильник
+J:\work\Marit King\Assets\Sprites\Game\cell\Property 1=unlock.png - открытая клетка.
+J:\work\Marit King\Assets\Sprites\Menu\button-play.png - кнопка вызова экрана игры.
+J:\work\Marit King\Assets\Sprites\Menu\button-rules.png - кнопка вызова экрана правил.
+J:\work\Marit King\Assets\Sprites\Menu\button-settings.png - кнопка вызова экрана настроек.
+J:\work\Marit King\Assets\Sprites\Menu\logo.png - лого.
+J:\work\Marit King\Assets\Sprites\Menu\Menu-bg.png - background для меню. 
+J:\work\Marit King\Assets\Sprites\popup-lose\button-lvl.png - кнопка выбора уровня для попап проигрыша.
+J:\work\Marit King\Assets\Sprites\popup-lose\button-tryagain.png - кнопка повтора уровня для попап проигрыша.
+J:\work\Marit King\Assets\Sprites\popup-lose\popup-lose-bg.png - background для попап проигрыша.
+J:\work\Marit King\Assets\Sprites\popup-pause\button-menu.png - кнопка выхода в меню для попап паузы
+J:\work\Marit King\Assets\Sprites\popup-pause\button-restart.png - кнопка перезапуска для попап паузы
+J:\work\Marit King\Assets\Sprites\popup-pause\button-resume.png - кнопка продолжения для попаппаузы
+J:\work\Marit King\Assets\Sprites\popup-pause\Frame.png - фрейм попап паузы
+J:\work\Marit King\Assets\Sprites\popup-win\button-lvl.png - кнопка выбора уровня их попап победы.
+J:\work\Marit King\Assets\Sprites\popup-win\button-next.png - кнопка следующий уровень для экрана победы.
+J:\work\Marit King\Assets\Sprites\popup-win\popup-win-bg.png - background для попап победы.
+J:\work\Marit King\Assets\Sprites\preview\Game.png - дизайн экрана игры.
+J:\work\Marit King\Assets\Sprites\preview\Menu.png - дизайн экрана меню.
+J:\work\Marit King\Assets\Sprites\preview\popup-lose.png - дизайн попап проигрыша.
+J:\work\Marit King\Assets\Sprites\preview\popup-pause.png - дизайн попап паузы.
+J:\work\Marit King\Assets\Sprites\preview\popup-win.png - дизайн попап победы.
+J:\work\Marit King\Assets\Sprites\preview\Rules.png - дизайн экрана правила.
+J:\work\Marit King\Assets\Sprites\preview\Select level-popup.png - дизайн попап для экрана выбора уровня.
+J:\work\Marit King\Assets\Sprites\preview\Select level.png - дизайн экрана выбора уровня.
+J:\work\Marit King\Assets\Sprites\preview\Settings.png - дизайн экрана настроек.
+J:\work\Marit King\Assets\Sprites\Rules\button-back.png - кнопка возврата с экрана правил. 
+J:\work\Marit King\Assets\Sprites\Rules\Frame-rules.png - экран правил.
+J:\work\Marit King\Assets\Sprites\Rules\Rules-bg.png - background экрана правил.
+J:\work\Marit King\Assets\Sprites\Select level\balance.png - фрейм с количеством золота для экрана выбора уровня
+J:\work\Marit King\Assets\Sprites\Select level\button-back.png - кнопка выхода для экрана выбора уровня 
+J:\work\Marit King\Assets\Sprites\Select level\button-close.png - кнопка закрытия попап для экрана выбора уровня
+J:\work\Marit King\Assets\Sprites\Select level\button-enter.png кнопка старта уровня.
+J:\work\Marit King\Assets\Sprites\Select level\lvl-1.png - кнопка выбора уровня 1. 
+J:\work\Marit King\Assets\Sprites\Select level\lvl-10-close.png - заблокированная кнопка открытия 10 уровня (уровень не доступен) 
+J:\work\Marit King\Assets\Sprites\Select level\lvl-10.png - кнопка выбора уровня 10. 
+J:\work\Marit King\Assets\Sprites\Select level\lvl-2-close.png  - заблокированная кнопка открытия 2 уровня (уровень не доступен) 
+J:\work\Marit King\Assets\Sprites\Select level\lvl-2.png - кнопка выбора уровня 2.
+J:\work\Marit King\Assets\Sprites\Select level\lvl-3-close.png - заблокированная кнопка открытия 3 уровня (уровень не доступен) 
+J:\work\Marit King\Assets\Sprites\Select level\lvl-3.png - кнопка выбора уровня 3.
+J:\work\Marit King\Assets\Sprites\Select level\lvl-4-close.png - заблокированная кнопка открытия 4 уровня (уровень не доступен) 
+J:\work\Marit King\Assets\Sprites\Select level\lvl-4.png - кнопка выбора уровня 4.
+J:\work\Marit King\Assets\Sprites\Select level\lvl-5-close.png - заблокированная кнопка открытия 5 уровня (уровень не доступен) 
+J:\work\Marit King\Assets\Sprites\Select level\lvl-5.png - кнопка выбора уровня 5.
+J:\work\Marit King\Assets\Sprites\Select level\lvl-6-close.png - заблокированная кнопка открытия 6 уровня (уровень не доступен) 
+J:\work\Marit King\Assets\Sprites\Select level\lvl-6.png - кнопка выбора уровня 6.
+J:\work\Marit King\Assets\Sprites\Select level\lvl-7-close.png - заблокированная кнопка открытия 7 уровня (уровень не доступен) 
+J:\work\Marit King\Assets\Sprites\Select level\lvl-7.png - кнопка выбора уровня 7.
+J:\work\Marit King\Assets\Sprites\Select level\lvl-8-close.png - заблокированная кнопка открытия 8 уровня (уровень не доступен) 
+J:\work\Marit King\Assets\Sprites\Select level\lvl-8.png - кнопка выбора уровня 8.
+J:\work\Marit King\Assets\Sprites\Select level\lvl-9-close.png - заблокированная кнопка открытия 9 уровня (уровень не доступен) 
+J:\work\Marit King\Assets\Sprites\Select level\lvl-9.png - кнопка выбора уровня 9.
+J:\work\Marit King\Assets\Sprites\Select level\pop-up-selectLVL.png - попап выбора уровня.
+J:\work\Marit King\Assets\Sprites\Select level\Select-level-bg.png background для экрана выбора уровня.
+J:\work\Marit King\Assets\Sprites\Settings\button-back.png - кнопка выходаиз экрана настроек.
+J:\work\Marit King\Assets\Sprites\Settings\button-rules.png - кнопка открытия экрана правил.
+J:\work\Marit King\Assets\Sprites\Settings\Settings-bg.png - backgroung для экрананастроек.
+J:\work\Marit King\Assets\Sprites\Settings\switch-off.png - активный переключатель звука и музыки (off).
+J:\work\Marit King\Assets\Sprites\Settings\switch-on.png- пассивный переключатель звука и музыки (on). 
