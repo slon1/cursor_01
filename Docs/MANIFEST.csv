@@ -71,8 +71,8 @@ Select level/lvl-10-close.png,Lvl_10_Locked,LevelButton,
 Settings/Settings-bg.png,Bg_Settings,Background,Фон экрана настроек
 Settings/button-back.png,Btn_Settings_Back,SettingsUi,Назад
 Settings/button-rules.png,Btn_Settings_Rules,SettingsUi,Открыть правила
-Settings/switch-on.png,Switch_On,SettingsUi,ПРОВЕРИТЬ: в описании перепутано с switch-off; смотреть по картинке
-Settings/switch-off.png,Switch_Off,SettingsUi,ПРОВЕРИТЬ: см. выше
+Settings/switch-on.png,Switch_On,SettingsUi,Переключатель ВКЛ (синий фон, бегунок справа)
+Settings/switch-off.png,Switch_Off,SettingsUi,Переключатель ВЫКЛ (тёмный фон, бегунок слева)
 preview/Game.png,Preview_Game,Preview,Референс; в каталог не входит
 preview/Menu.png,Preview_Menu,Preview,Референс
 preview/popup-lose.png,Preview_PopupLose,Preview,Референс
@@ -82,3 +82,4 @@ preview/Rules.png,Preview_Rules,Preview,Референс
 preview/Select level-popup.png,Preview_SelectLevelPopup,Preview,Референс
 preview/Select level.png,Preview_SelectLevel,Preview,Референс
 preview/Settings.png,Preview_Settings,Preview,Референс
+preview/Preload.png,Preview_Preload,Preview,Референс экрана загрузки
