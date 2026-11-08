@@ -3,8 +3,12 @@
     "rootNamespace": "Game.View",
     "references": [
         "Game.Core",
+        "Game.Config",
         "UniTask",
-        "DOTween.Modules"
+        "UniTask.DOTween",
+        "DOTween.Modules",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

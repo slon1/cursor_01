@@ -3,6 +3,7 @@
     "rootNamespace": "Game.Tests.EditMode",
     "references": [
         "Game.Core",
+        "Game.Config",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
