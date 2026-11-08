@@ -1,0 +1,269 @@
+using System;
+using System.Collections.Generic;
+
+namespace Game.Core
+{
+    public static class RulesEngine
+    {
+        public static MoveResult Move(GameState state, LionId lion, CellPos target)
+        {
+            if (state.Status != GameStatus.Playing)
+                return Reject(RejectReason.GameOver);
+
+            var origin = state.Position(lion);
+            if (!state.InBounds(target))
+                return Reject(RejectReason.OutOfBounds);
+
+            if (!TryGetKind(lion, origin, target, out var kind, out var shapeReason))
+                return Reject(shapeReason);
+
+            var other = state.Position(Other(lion));
+            if (other == target)
+                return ResolveSwap(state, lion, origin, target, kind);
+
+            var cell = state.CellAt(target);
+            if (cell.Item == ItemType.Chest)
+                return Reject(RejectReason.TargetIsChest);
+
+            if (cell.Item == ItemType.Gate && lion == LionId.A)
+                return ResolveGateBlock(state, lion, target);
+
+            return ResolveLanding(state, lion, origin, target, kind);
+        }
+
+        public static ExtractResult ConfirmExtract(GameState state)
+        {
+            if (state.Status != GameStatus.Playing || !ExitConditionsMet(state))
+                return new ExtractResult(false, Array.Empty<GameEvent>());
+
+            state.Status = GameStatus.Won;
+            return new ExtractResult(true, new GameEvent[] { new GameWon() });
+        }
+
+        public static IReadOnlyList<MoveTarget> GetTargets(GameState state, LionId lion)
+        {
+            if (state.Status != GameStatus.Playing)
+                return Array.Empty<MoveTarget>();
+
+            var origin = state.Position(lion);
+            var targets = new List<MoveTarget>();
+            AddRange(state, lion, origin, 1, MoveKind.Step, targets);
+            if (lion == LionId.A)
+                AddRange(state, lion, origin, 2, MoveKind.Jump, targets);
+
+            return targets;
+        }
+
+        public static bool ExitConditionsMet(GameState state)
+        {
+            if (!state.ChestOpened || !TryFind(state, ItemType.Exit, out var exit))
+                return false;
+
+            return Adjacent(state.LionA, exit) && Adjacent(state.LionB, exit);
+        }
+
+        static MoveResult ResolveSwap(GameState state, LionId lion, CellPos origin, CellPos target, MoveKind kind)
+        {
+            var events = new List<GameEvent>();
+            var alarmBefore = state.Alarm;
+            state.SetPosition(lion, target);
+            state.SetPosition(Other(lion), origin);
+            events.Add(new LionsSwapped(state.LionA, state.LionB));
+            if (kind == MoveKind.Jump)
+                state.Alarm += state.JumpCost;
+
+            Finish(state, alarmBefore, events);
+            return Accept(events);
+        }
+
+        static MoveResult ResolveGateBlock(GameState state, LionId lion, CellPos target)
+        {
+            var events = new List<GameEvent>();
+            var cell = state.CellAt(target);
+            if (!cell.IsOpen)
+            {
+                cell.IsOpen = true;
+                events.Add(new CellOpened(target));
+            }
+
+            events.Add(new GateBlocked(target, lion));
+            return new MoveResult(false, RejectReason.GateBlocksLionA, events);
+        }
+
+        static MoveResult ResolveLanding(GameState state, LionId lion, CellPos origin, CellPos target, MoveKind kind)
+        {
+            var events = new List<GameEvent>();
+            var alarmBefore = state.Alarm;
+            var cell = state.CellAt(target);
+            if (!cell.IsOpen)
+            {
+                cell.IsOpen = true;
+                events.Add(new CellOpened(target));
+            }
+
+            var landed = false;
+            var alarmCost = 0;
+            var resetAlarm = false;
+            switch (cell.Item)
+            {
+                case ItemType.Trap:
+                    events.Add(new TrapTriggered(target, lion));
+                    alarmCost += state.TrapCost;
+                    break;
+                case ItemType.Gate:
+                    cell.Item = ItemType.None;
+                    events.Add(new GateBroken(target));
+                    alarmCost += state.GateBreakCost;
+                    break;
+                case ItemType.Gold:
+                    state.SetPosition(lion, target);
+                    state.Gold += 1;
+                    cell.Item = ItemType.None;
+                    events.Add(new GoldCollected(target, lion, state.Gold));
+                    landed = true;
+                    break;
+                case ItemType.Lever:
+                    state.SetPosition(lion, target);
+                    cell.Item = ItemType.None;
+                    events.Add(new LeverUsed(target, lion));
+                    landed = true;
+                    resetAlarm = true;
+                    break;
+                case ItemType.Exit:
+                    events.Add(new ExitAttempted(ExitConditionsMet(state)));
+                    break;
+                case ItemType.None:
+                    state.SetPosition(lion, target);
+                    events.Add(new LionMoved(lion, origin, target, kind == MoveKind.Jump));
+                    landed = true;
+                    break;
+            }
+
+            if (landed && kind == MoveKind.Jump)
+                alarmCost += state.JumpCost;
+
+            state.Alarm += alarmCost;
+            if (resetAlarm)
+                state.Alarm = 0;
+
+            Finish(state, alarmBefore, events);
+            return Accept(events);
+        }
+
+        static void Finish(GameState state, int alarmBefore, List<GameEvent> events)
+        {
+            if (state.Alarm != alarmBefore)
+                events.Add(new AlarmChanged(alarmBefore, state.Alarm));
+
+            if (TryOpenChest(state))
+                events.Add(new ChestOpened());
+
+            if (state.Alarm >= state.AlarmThreshold)
+            {
+                state.Status = GameStatus.Lost;
+                events.Add(new GameLost());
+            }
+        }
+
+        static bool TryOpenChest(GameState state)
+        {
+            if (state.ChestOpened || !TryFind(state, ItemType.Chest, out var chest))
+                return false;
+
+            if (!Adjacent(state.LionA, chest) || !Adjacent(state.LionB, chest))
+                return false;
+
+            state.ChestOpened = true;
+            return true;
+        }
+
+        static void AddRange(GameState state, LionId lion, CellPos origin, int distance, MoveKind kind, List<MoveTarget> targets)
+        {
+            Consider(state, lion, new CellPos(origin.X, origin.Y - distance), kind, targets);
+            Consider(state, lion, new CellPos(origin.X + distance, origin.Y), kind, targets);
+            Consider(state, lion, new CellPos(origin.X, origin.Y + distance), kind, targets);
+            Consider(state, lion, new CellPos(origin.X - distance, origin.Y), kind, targets);
+        }
+
+        static void Consider(GameState state, LionId lion, CellPos pos, MoveKind kind, List<MoveTarget> targets)
+        {
+            if (state.InBounds(pos) && IsListed(state, lion, pos))
+                targets.Add(new MoveTarget(pos, kind));
+        }
+
+        static bool IsListed(GameState state, LionId lion, CellPos pos)
+        {
+            if (pos == state.Position(Other(lion)))
+                return true;
+
+            var cell = state.CellAt(pos);
+            if (!cell.IsOpen)
+                return true;
+
+            if (cell.Item == ItemType.Chest)
+                return false;
+
+            if (lion == LionId.A && cell.Item == ItemType.Gate)
+                return false;
+
+            return true;
+        }
+
+        static bool TryGetKind(LionId lion, CellPos from, CellPos to, out MoveKind kind, out RejectReason reason)
+        {
+            kind = MoveKind.Step;
+            reason = RejectReason.None;
+            var dx = to.X - from.X;
+            var dy = to.Y - from.Y;
+            if ((dx != 0 && dy != 0) || (dx == 0 && dy == 0))
+            {
+                reason = RejectReason.InvalidShape;
+                return false;
+            }
+
+            var distance = Math.Abs(dx) + Math.Abs(dy);
+            if (distance == 1)
+                return true;
+
+            if (distance == 2 && lion == LionId.A)
+            {
+                kind = MoveKind.Jump;
+                return true;
+            }
+
+            reason = RejectReason.NotAdjacent;
+            return false;
+        }
+
+        static bool TryFind(GameState state, ItemType item, out CellPos pos)
+        {
+            for (var x = 0; x < state.Width; x++)
+            {
+                for (var y = 0; y < state.Height; y++)
+                {
+                    pos = new CellPos(x, y);
+                    if (state.CellAt(pos).Item == item)
+                        return true;
+                }
+            }
+
+            pos = default;
+            return false;
+        }
+
+        static bool Adjacent(CellPos a, CellPos b)
+        {
+            var dx = Math.Abs(a.X - b.X);
+            var dy = Math.Abs(a.Y - b.Y);
+            return dx + dy == 1;
+        }
+
+        static LionId Other(LionId lion) => lion == LionId.A ? LionId.B : LionId.A;
+
+        static MoveResult Accept(List<GameEvent> events) =>
+            new MoveResult(true, RejectReason.None, events);
+
+        static MoveResult Reject(RejectReason reason) =>
+            new MoveResult(false, reason, Array.Empty<GameEvent>());
+    }
+}
