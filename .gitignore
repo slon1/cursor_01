@@ -1,0 +1,52 @@
+# Unity
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# IDE and generated project files
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Builds and packages
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# Crash and local state
+sysinfo.txt
+crashlytics-buildid.txt
+~UnityDirMonSyncFile~
+InitTestScene*.unity*
+.utmp
+.plastic
+*.stackdump

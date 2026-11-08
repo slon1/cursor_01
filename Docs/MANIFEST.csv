@@ -1,0 +1,84 @@
+path,sprite_id,category,note
+icon_background.png,AppIcon_Background,AppIcon,Иконка приложения; не входит в каталог (PlayerSettings вручную)
+icon_foreground.png,AppIcon_Foreground,AppIcon,Adaptive icon foreground; не входит в каталог
+push_large_icon.png,Push_LargeIcon,AppIcon,ПРОВЕРИТЬ: в описании «adaptive background», имя говорит про push; не входит в каталог
+Game/active-cell.png,Hl_Step,Highlight,Подсветка клетки для шага
+Game/active-cell_2.png,Hl_Jump,Highlight,Подсветка клетки для прыжка (лев А)
+Game/button-EXTRACT.png,Btn_Extract,GameUi,Золотая кнопка EXTRACT (условия выполнены)
+Game/button-EXTRACT-lock.png,Btn_Extract_Locked,GameUi,Серая кнопка EXTRACT (условия не выполнены)
+Game/button-pause.png,Btn_Pause,GameUi,Кнопка паузы
+Game/Frame-alarm.png,Alarm_Frame,GameUi,Фрейм уровня тревоги
+Game/progress-bar-frame.png,Alarm_BarFrame,GameUi,Шкала тревоги (рамка)
+Game/progressbar-active.png,Alarm_BarFill,GameUi,Заполнитель шкалы тревоги
+Game/Game-bg.png,Bg_Game,Background,Фон игры
+Game/player-blue-big-active.png,LionA_Icon_Active,LionSelect,Иконка выбора льва А (активна)
+Game/player-blue-big-inactive.png,LionA_Icon_Inactive,LionSelect,Иконка выбора льва А (пассивна)
+Game/player-blue-small.png,LionA_Token,Token,Фишка льва А на поле
+Game/player-gold-big-active.png,LionB_Icon_Active,LionSelect,Иконка выбора льва Б (активна)
+Game/player-gold-big-inactive.png,LionB_Icon_Inactive,LionSelect,Иконка выбора льва Б (пассивна)
+Game/player-gold-small.png,LionB_Token,Token,Фишка льва Б на поле
+Game/cell/Property 1=lock.png,Cell_Closed,Cell,Закрытая клетка
+Game/cell/Property 1=unlock.png,Cell_Open,Cell,Открытая пустая клетка
+Game/cell/Property 1=cage.png,Item_Gate,Item,Решетка
+Game/cell/Property 1=chest.png,Item_Chest,Item,Сундук
+Game/cell/Property 1=coin.png,Item_Gold,Item,Золото
+Game/cell/Property 1=exit.png,Item_Exit,Item,Выход
+Game/cell/Property 1=spades.png,Item_Trap,Item,Ловушка
+Game/cell/Property 1=switch.png,Item_Lever,Item,Рубильник (сбрасывает тревогу)
+Menu/button-play.png,Btn_Menu_Play,MenuUi,Кнопка «играть»
+Menu/button-rules.png,Btn_Menu_Rules,MenuUi,Кнопка «правила»
+Menu/button-settings.png,Btn_Menu_Settings,MenuUi,Кнопка «настройки»
+Menu/logo.png,Menu_Logo,MenuUi,Лого
+Menu/Menu-bg.png,Bg_Menu,Background,Фон меню
+popup-lose/popup-lose-bg.png,Popup_Lose_Bg,Popup,Фон попапа проигрыша
+popup-lose/button-lvl.png,Btn_Lose_SelectLevel,PopupUi,Выбор уровня
+popup-lose/button-tryagain.png,Btn_Lose_TryAgain,PopupUi,Повтор уровня
+popup-pause/Frame.png,Popup_Pause_Frame,Popup,Фрейм попапа паузы
+popup-pause/button-menu.png,Btn_Pause_Menu,PopupUi,В меню
+popup-pause/button-restart.png,Btn_Pause_Restart,PopupUi,Перезапуск
+popup-pause/button-resume.png,Btn_Pause_Resume,PopupUi,Продолжить
+popup-win/popup-win-bg.png,Popup_Win_Bg,Popup,Фон попапа победы
+popup-win/button-lvl.png,Btn_Win_SelectLevel,PopupUi,Выбор уровня
+popup-win/button-next.png,Btn_Win_Next,PopupUi,Следующий уровень
+Rules/Rules-bg.png,Bg_Rules,Background,Фон экрана правил
+Rules/Frame-rules.png,Rules_Frame,RulesUi,Экран правил (фрейм)
+Rules/button-back.png,Btn_Rules_Back,RulesUi,Назад
+Select level/Select-level-bg.png,Bg_SelectLevel,Background,Фон экрана выбора уровня
+Select level/pop-up-selectLVL.png,Popup_SelectLevel,Popup,Попап выбора уровня
+Select level/balance.png,Balance_Frame,SelectLevelUi,Фрейм с золотом
+Select level/button-back.png,Btn_Select_Back,SelectLevelUi,Выход с экрана выбора
+Select level/button-close.png,Btn_SelectPopup_Close,SelectLevelUi,Закрыть попап
+Select level/button-enter.png,Btn_SelectPopup_Enter,SelectLevelUi,Старт уровня
+Select level/lvl-1.png,Lvl_01_Open,LevelButton,Кнопка уровня 1 (закрытой версии нет)
+Select level/lvl-2.png,Lvl_02_Open,LevelButton,
+Select level/lvl-2-close.png,Lvl_02_Locked,LevelButton,
+Select level/lvl-3.png,Lvl_03_Open,LevelButton,
+Select level/lvl-3-close.png,Lvl_03_Locked,LevelButton,
+Select level/lvl-4.png,Lvl_04_Open,LevelButton,
+Select level/lvl-4-close.png,Lvl_04_Locked,LevelButton,
+Select level/lvl-5.png,Lvl_05_Open,LevelButton,
+Select level/lvl-5-close.png,Lvl_05_Locked,LevelButton,
+Select level/lvl-6.png,Lvl_06_Open,LevelButton,
+Select level/lvl-6-close.png,Lvl_06_Locked,LevelButton,
+Select level/lvl-7.png,Lvl_07_Open,LevelButton,
+Select level/lvl-7-close.png,Lvl_07_Locked,LevelButton,
+Select level/lvl-8.png,Lvl_08_Open,LevelButton,
+Select level/lvl-8-close.png,Lvl_08_Locked,LevelButton,
+Select level/lvl-9.png,Lvl_09_Open,LevelButton,
+Select level/lvl-9-close.png,Lvl_09_Locked,LevelButton,
+Select level/lvl-10.png,Lvl_10_Open,LevelButton,
+Select level/lvl-10-close.png,Lvl_10_Locked,LevelButton,
+Settings/Settings-bg.png,Bg_Settings,Background,Фон экрана настроек
+Settings/button-back.png,Btn_Settings_Back,SettingsUi,Назад
+Settings/button-rules.png,Btn_Settings_Rules,SettingsUi,Открыть правила
+Settings/switch-on.png,Switch_On,SettingsUi,ПРОВЕРИТЬ: в описании перепутано с switch-off; смотреть по картинке
+Settings/switch-off.png,Switch_Off,SettingsUi,ПРОВЕРИТЬ: см. выше
+preview/Game.png,Preview_Game,Preview,Референс; в каталог не входит
+preview/Menu.png,Preview_Menu,Preview,Референс
+preview/popup-lose.png,Preview_PopupLose,Preview,Референс
+preview/popup-pause.png,Preview_PopupPause,Preview,Референс
+preview/popup-win.png,Preview_PopupWin,Preview,Референс
+preview/Rules.png,Preview_Rules,Preview,Референс
+preview/Select level-popup.png,Preview_SelectLevelPopup,Preview,Референс
+preview/Select level.png,Preview_SelectLevel,Preview,Референс
+preview/Settings.png,Preview_Settings,Preview,Референс
