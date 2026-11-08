@@ -59,5 +59,33 @@ namespace Game.Tests.EditMode
             Assert.Throws<ArgumentOutOfRangeException>(() => _catalog.GetLevelButton(0, false));
             Assert.Throws<ArgumentOutOfRangeException>(() => _catalog.GetLevelButton(11, true));
         }
+
+        [Test]
+        public void Get_AfterListEdit_ReturnsNewSprite()
+        {
+            var catalog = ScriptableObject.CreateInstance<SpriteCatalog>();
+            var first = Sprite.Create(new Texture2D(4, 4), new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
+            var second = Sprite.Create(new Texture2D(4, 4), new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
+            try
+            {
+                catalog.Entries.Add(new SpriteCatalogEntry { Id = SpriteId.Bg_Game, Sprite = first });
+                Assert.AreSame(first, catalog.Get(SpriteId.Bg_Game));
+
+                var serialized = new SerializedObject(catalog);
+                var sprite = serialized.FindProperty("Entries").GetArrayElementAtIndex(0).FindPropertyRelative("Sprite");
+                sprite.objectReferenceValue = second;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+
+                Assert.AreSame(second, catalog.Get(SpriteId.Bg_Game));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(first.texture);
+                UnityEngine.Object.DestroyImmediate(second.texture);
+                UnityEngine.Object.DestroyImmediate(first);
+                UnityEngine.Object.DestroyImmediate(second);
+                UnityEngine.Object.DestroyImmediate(catalog);
+            }
+        }
     }
 }

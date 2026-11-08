@@ -20,6 +20,14 @@ namespace Game.Config
         public Sprite[] LevelButtonOpen = new Sprite[LevelCount];
         public Sprite[] LevelButtonLocked = new Sprite[LevelCount];
 
+        Dictionary<SpriteId, Sprite> _sprites;
+
+        void OnEnable() => InvalidateSpriteLookup();
+
+        void OnValidate() => InvalidateSpriteLookup();
+
+        public void InvalidateSpriteLookup() => _sprites = null;
+
         public Sprite Get(SpriteId id)
         {
             if (!TryGet(id, out var sprite))
@@ -30,20 +38,27 @@ namespace Game.Config
 
         public bool TryGet(SpriteId id, out Sprite sprite)
         {
-            if (Entries != null)
+            EnsureSprites();
+            return _sprites.TryGetValue(id, out sprite) && sprite != null;
+        }
+
+        void EnsureSprites()
+        {
+            if (_sprites != null)
+                return;
+
+            _sprites = new Dictionary<SpriteId, Sprite>();
+            if (Entries == null)
+                return;
+
+            for (var i = 0; i < Entries.Count; i++)
             {
-                for (var i = 0; i < Entries.Count; i++)
-                {
-                    if (Entries[i].Id != id)
-                        continue;
+                var entry = Entries[i];
+                if (entry.Sprite == null)
+                    continue;
 
-                    sprite = Entries[i].Sprite;
-                    return sprite != null;
-                }
+                _sprites[entry.Id] = entry.Sprite;
             }
-
-            sprite = null;
-            return false;
         }
 
         public Sprite GetLevelButton(int level, bool locked)

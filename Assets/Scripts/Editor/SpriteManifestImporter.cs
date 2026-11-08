@@ -122,6 +122,7 @@ namespace Game.Editor
             catalog.Entries = entries;
             catalog.LevelButtonOpen = levelOpen;
             catalog.LevelButtonLocked = levelLocked;
+            catalog.InvalidateSpriteLookup();
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
             Debug.Log("Импорт манифеста: записано " + recorded + " спрайтов, пропущено " + skipped + ".");

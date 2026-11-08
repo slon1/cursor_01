@@ -15,5 +15,6 @@ MonoBehaviour:
   FadeDuration: 0.3
   MoveDuration: 0.18
   PopupDuration: 0.25
+  GoldPointsPerCoin: 100
   DefaultSoundOn: 1
   DefaultMusicOn: 1
