@@ -18,7 +18,11 @@ namespace Game.Tests.EditMode
             Assert.IsTrue(result.Accepted);
             Assert.AreEqual(new CellPos(1, 0), state.Position(lion));
             Assert.AreEqual(new CellPos(0, 0), state.Position(Other(lion)));
-            Assert.IsInstanceOf<LionsSwapped>(result.Events.Single());
+            var swap = (LionsSwapped)result.Events.Single();
+            Assert.AreEqual(state.LionA, swap.PosA);
+            Assert.AreEqual(state.LionB, swap.PosB);
+            Assert.AreEqual(lion, swap.Initiator);
+            Assert.IsFalse(swap.IsJump);
             Assert.AreEqual(0, state.Alarm);
         }
 
@@ -61,7 +65,8 @@ namespace Game.Tests.EditMode
             Assert.AreEqual(new CellPos(0, 0), state.LionA);
             Assert.AreEqual(ItemType.Gate, state.CellAt(new CellPos(1, 0)).Item);
             Assert.AreEqual(0, state.Alarm);
-            Assert.IsInstanceOf<GateBlocked>(result.Events.Single());
+            Assert.IsTrue(state.CellAt(new CellPos(1, 0)).IsOpen);
+            Assert.AreEqual(0, result.Events.Count);
         }
 
         [Test]
@@ -109,18 +114,34 @@ namespace Game.Tests.EditMode
 
         [TestCase(LionId.A)]
         [TestCase(LionId.B)]
-        public void Step_OntoChest_RejectsWithoutChanges(LionId lion)
+        public void Step_OntoOpenChest_RejectsWithoutChanges(LionId lion)
         {
             var state = ActorAtOrigin(lion, ".C../....");
-            var before = state.CellAt(new CellPos(1, 0)).IsOpen;
             var result = Move(state, lion, 1, 0);
 
             Assert.IsFalse(result.Accepted);
             Assert.AreEqual(RejectReason.TargetIsChest, result.Reason);
             Assert.AreEqual(0, result.Events.Count);
             Assert.AreEqual(new CellPos(0, 0), state.Position(lion));
-            Assert.AreEqual(before, state.CellAt(new CellPos(1, 0)).IsOpen);
+            Assert.IsTrue(state.CellAt(new CellPos(1, 0)).IsOpen);
             Assert.AreEqual(ItemType.Chest, state.CellAt(new CellPos(1, 0)).Item);
+            Assert.AreEqual(0, state.Alarm);
+        }
+
+        [TestCase(LionId.A)]
+        [TestCase(LionId.B)]
+        public void Step_OntoClosedChest_OpensWithoutCost(LionId lion)
+        {
+            var state = ActorAtOrigin(lion, ".c../....");
+            var result = Move(state, lion, 1, 0);
+
+            Assert.IsTrue(result.Accepted);
+            Assert.AreEqual(RejectReason.None, result.Reason);
+            Assert.AreEqual(new CellPos(0, 0), state.Position(lion));
+            Assert.AreEqual(0, state.Alarm);
+            Assert.IsTrue(state.CellAt(new CellPos(1, 0)).IsOpen);
+            Assert.AreEqual(ItemType.Chest, state.CellAt(new CellPos(1, 0)).Item);
+            Assert.AreEqual(new CellPos(1, 0), ((CellOpened)result.Events.Single()).Pos);
         }
 
         [TestCase(LionId.A)]
@@ -158,10 +179,13 @@ namespace Game.Tests.EditMode
             var cell = state.CellAt(new CellPos(1, 0));
             if (contents == "c")
             {
-                Assert.IsFalse(result.Accepted);
-                Assert.IsFalse(cell.IsOpen);
-                Assert.AreEqual(0, result.Events.Count);
+                Assert.IsTrue(result.Accepted);
+                Assert.AreEqual(RejectReason.None, result.Reason);
+                Assert.IsTrue(cell.IsOpen);
+                Assert.AreEqual(ItemType.Chest, cell.Item);
                 Assert.AreEqual(new CellPos(0, 0), state.Position(lion));
+                Assert.AreEqual(0, state.Alarm);
+                Assert.IsInstanceOf<CellOpened>(result.Events.Single());
                 return;
             }
 
@@ -179,10 +203,13 @@ namespace Game.Tests.EditMode
                     Assert.IsInstanceOf<LionMoved>(result.Events[1]);
                     break;
                 case "r" when lion == LionId.A:
-                    Assert.IsFalse(result.Accepted);
+                    Assert.IsTrue(result.Accepted);
+                    Assert.AreEqual(RejectReason.None, result.Reason);
                     Assert.AreEqual(ItemType.Gate, cell.Item);
                     Assert.AreEqual(new CellPos(0, 0), state.Position(lion));
                     Assert.AreEqual(0, state.Alarm);
+                    Assert.IsInstanceOf<GateBlocked>(result.Events[1]);
+                    Assert.AreEqual(2, result.Events.Count);
                     break;
                 case "r":
                     Assert.AreEqual(ItemType.None, cell.Item);
@@ -218,26 +245,50 @@ namespace Game.Tests.EditMode
             var result = Move(state, LionId.A, 2, 0);
             var between = state.CellAt(new CellPos(1, 0));
 
+            Assert.IsTrue(result.Accepted);
+            Assert.AreEqual(RejectReason.None, result.Reason);
             Assert.IsFalse(between.IsOpen);
             Assert.AreEqual(ItemType.None, between.Item);
             Assert.IsInstanceOf<CellOpened>(result.Events[0]);
             Assert.IsInstanceOf(interaction, result.Events[1]);
+            if (contents == "r")
+                Assert.AreEqual(0, state.Alarm);
             Assert.AreEqual(
                 contents == "t" || contents == "r" || contents == "e" ? new CellPos(0, 0) : new CellPos(2, 0),
                 state.LionA);
         }
 
         [Test]
-        public void Jump_OntoClosedChest_ChangesNothing()
+        public void Jump_OntoClosedChest_OpensWithoutCost()
         {
-            var state = LevelBuilder.Play("..c./....", 0, 0, 3, 1);
+            var state = LevelBuilder.Play("..c./....", 0, 0, 3, 1, jumpCost: 9);
             var result = Move(state, LionId.A, 2, 0);
 
-            Assert.IsFalse(result.Accepted);
-            Assert.AreEqual(RejectReason.TargetIsChest, result.Reason);
-            Assert.IsFalse(state.CellAt(new CellPos(2, 0)).IsOpen);
+            Assert.IsTrue(result.Accepted);
+            Assert.AreEqual(RejectReason.None, result.Reason);
+            Assert.IsTrue(state.CellAt(new CellPos(2, 0)).IsOpen);
+            Assert.AreEqual(ItemType.Chest, state.CellAt(new CellPos(2, 0)).Item);
             Assert.AreEqual(new CellPos(0, 0), state.LionA);
-            Assert.AreEqual(0, result.Events.Count);
+            Assert.AreEqual(0, state.Alarm);
+            Assert.IsFalse(state.ChestOpened);
+            Assert.AreEqual(new CellPos(2, 0), ((CellOpened)result.Events.Single()).Pos);
+        }
+
+        [Test]
+        public void Step_OntoClosedGate_LionA_IsAccepted()
+        {
+            var state = ActorAtOrigin(LionId.A, ".r../....");
+            var result = Move(state, LionId.A, 1, 0);
+
+            Assert.IsTrue(result.Accepted);
+            Assert.AreEqual(RejectReason.None, result.Reason);
+            Assert.AreEqual(new CellPos(0, 0), state.LionA);
+            Assert.AreEqual(0, state.Alarm);
+            Assert.AreEqual(ItemType.Gate, state.CellAt(new CellPos(1, 0)).Item);
+            Assert.IsTrue(state.CellAt(new CellPos(1, 0)).IsOpen);
+            Assert.IsInstanceOf<CellOpened>(result.Events[0]);
+            Assert.IsInstanceOf<GateBlocked>(result.Events[1]);
+            Assert.AreEqual(2, result.Events.Count);
         }
 
         [Test]
@@ -276,7 +327,11 @@ namespace Game.Tests.EditMode
             Assert.AreEqual(new CellPos(0, 0), state.LionB);
             Assert.AreEqual(ItemType.Trap, state.CellAt(new CellPos(1, 0)).Item);
             Assert.AreEqual(2, state.Alarm);
-            Assert.IsInstanceOf<LionsSwapped>(result.Events[0]);
+            var swap = (LionsSwapped)result.Events[0];
+            Assert.AreEqual(new CellPos(2, 0), swap.PosA);
+            Assert.AreEqual(new CellPos(0, 0), swap.PosB);
+            Assert.AreEqual(LionId.A, swap.Initiator);
+            Assert.IsTrue(swap.IsJump);
         }
 
         [Test]
@@ -306,7 +361,9 @@ namespace Game.Tests.EditMode
             var blocked = LevelBuilder.Play("..R./....", 0, 0, 3, 1, jumpCost: 9, gateBreakCost: 3);
             var result = Move(blocked, LionId.A, 2, 0);
 
+            Assert.IsFalse(result.Accepted);
             Assert.AreEqual(RejectReason.GateBlocksLionA, result.Reason);
+            Assert.AreEqual(0, result.Events.Count);
             Assert.AreEqual(0, blocked.Alarm);
             Assert.AreEqual(new CellPos(0, 0), blocked.LionA);
             Assert.AreEqual(ItemType.Gate, blocked.CellAt(new CellPos(2, 0)).Item);
@@ -380,6 +437,45 @@ namespace Game.Tests.EditMode
             var again = Move(state, LionId.A, 0, 1);
             Assert.AreEqual(0, again.Events.OfType<ChestOpened>().Count());
             Assert.IsTrue(state.ChestOpened);
+        }
+
+        [Test]
+        public void ClosedChest_BetweenLions_OpensCellThenFlag()
+        {
+            var state = LevelBuilder.Play("..../.c../....", 1, 0, 3, 1);
+            var result = Move(state, LionId.B, 2, 1);
+            var chest = new CellPos(1, 1);
+
+            Assert.IsTrue(result.Accepted);
+            Assert.IsTrue(state.CellAt(chest).IsOpen);
+            Assert.AreEqual(ItemType.Chest, state.CellAt(chest).Item);
+            Assert.IsTrue(state.ChestOpened);
+            Assert.IsInstanceOf<LionMoved>(result.Events[0]);
+            Assert.AreEqual(chest, ((CellOpened)result.Events[1]).Pos);
+            Assert.IsInstanceOf<ChestOpened>(result.Events[2]);
+            Assert.AreEqual(3, result.Events.Count);
+        }
+
+        [Test]
+        public void ConfirmExtract_ClosedExit_ChangesNothing()
+        {
+            var state = LevelBuilder.Play("..../.C.e/....", 1, 0, 0, 2);
+            Move(state, LionId.B, 0, 1);
+            Move(state, LionId.A, 2, 0);
+            Move(state, LionId.A, 3, 0);
+            Move(state, LionId.B, 0, 2);
+            Move(state, LionId.B, 1, 2);
+            Move(state, LionId.B, 2, 2);
+            Move(state, LionId.B, 3, 2);
+
+            Assert.IsTrue(state.ChestOpened);
+            Assert.IsFalse(state.CellAt(new CellPos(3, 1)).IsOpen);
+            Assert.IsFalse(RulesEngine.ExitConditionsMet(state));
+            var extract = RulesEngine.ConfirmExtract(state);
+            Assert.IsFalse(extract.Accepted);
+            Assert.AreEqual(0, extract.Events.Count);
+            Assert.AreEqual(GameStatus.Playing, state.Status);
+            Assert.IsFalse(state.CellAt(new CellPos(3, 1)).IsOpen);
         }
 
         [Test]

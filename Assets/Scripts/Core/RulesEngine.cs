@@ -22,11 +22,11 @@ namespace Game.Core
                 return ResolveSwap(state, lion, origin, target, kind);
 
             var cell = state.CellAt(target);
-            if (cell.Item == ItemType.Chest)
+            if (cell.Item == ItemType.Chest && cell.IsOpen)
                 return Reject(RejectReason.TargetIsChest);
 
-            if (cell.Item == ItemType.Gate && lion == LionId.A)
-                return ResolveGateBlock(state, lion, target);
+            if (cell.Item == ItemType.Gate && lion == LionId.A && cell.IsOpen)
+                return Reject(RejectReason.GateBlocksLionA);
 
             return ResolveLanding(state, lion, origin, target, kind);
         }
@@ -59,6 +59,9 @@ namespace Game.Core
             if (!state.ChestOpened || !TryFind(state, ItemType.Exit, out var exit))
                 return false;
 
+            if (!state.CellAt(exit).IsOpen)
+                return false;
+
             return Adjacent(state.LionA, exit) && Adjacent(state.LionB, exit);
         }
 
@@ -68,26 +71,12 @@ namespace Game.Core
             var alarmBefore = state.Alarm;
             state.SetPosition(lion, target);
             state.SetPosition(Other(lion), origin);
-            events.Add(new LionsSwapped(state.LionA, state.LionB));
+            events.Add(new LionsSwapped(state.LionA, state.LionB, lion, kind == MoveKind.Jump));
             if (kind == MoveKind.Jump)
                 state.Alarm += state.JumpCost;
 
             Finish(state, alarmBefore, events);
             return Accept(events);
-        }
-
-        static MoveResult ResolveGateBlock(GameState state, LionId lion, CellPos target)
-        {
-            var events = new List<GameEvent>();
-            var cell = state.CellAt(target);
-            if (!cell.IsOpen)
-            {
-                cell.IsOpen = true;
-                events.Add(new CellOpened(target));
-            }
-
-            events.Add(new GateBlocked(target, lion));
-            return new MoveResult(false, RejectReason.GateBlocksLionA, events);
         }
 
         static MoveResult ResolveLanding(GameState state, LionId lion, CellPos origin, CellPos target, MoveKind kind)
@@ -110,10 +99,15 @@ namespace Game.Core
                     events.Add(new TrapTriggered(target, lion));
                     alarmCost += state.TrapCost;
                     break;
+                case ItemType.Gate when lion == LionId.A:
+                    events.Add(new GateBlocked(target, lion));
+                    break;
                 case ItemType.Gate:
                     cell.Item = ItemType.None;
                     events.Add(new GateBroken(target));
                     alarmCost += state.GateBreakCost;
+                    break;
+                case ItemType.Chest:
                     break;
                 case ItemType.Gold:
                     state.SetPosition(lion, target);
@@ -155,8 +149,7 @@ namespace Game.Core
             if (state.Alarm != alarmBefore)
                 events.Add(new AlarmChanged(alarmBefore, state.Alarm));
 
-            if (TryOpenChest(state))
-                events.Add(new ChestOpened());
+            TryOpenChest(state, events);
 
             if (state.Alarm >= state.AlarmThreshold)
             {
@@ -165,16 +158,23 @@ namespace Game.Core
             }
         }
 
-        static bool TryOpenChest(GameState state)
+        static void TryOpenChest(GameState state, List<GameEvent> events)
         {
             if (state.ChestOpened || !TryFind(state, ItemType.Chest, out var chest))
-                return false;
+                return;
 
             if (!Adjacent(state.LionA, chest) || !Adjacent(state.LionB, chest))
-                return false;
+                return;
+
+            var cell = state.CellAt(chest);
+            if (!cell.IsOpen)
+            {
+                cell.IsOpen = true;
+                events.Add(new CellOpened(chest));
+            }
 
             state.ChestOpened = true;
-            return true;
+            events.Add(new ChestOpened());
         }
 
         static void AddRange(GameState state, LionId lion, CellPos origin, int distance, MoveKind kind, List<MoveTarget> targets)
