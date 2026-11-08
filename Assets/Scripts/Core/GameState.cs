@@ -62,6 +62,23 @@ namespace Game.Core
 
         public CellPos Position(LionId lion) => lion == LionId.A ? LionA : LionB;
 
+        public GameState Clone()
+        {
+            var copy = new Cell[Width, Height];
+            for (var x = 0; x < Width; x++)
+            {
+                for (var y = 0; y < Height; y++)
+                    copy[x, y] = _cells[x, y].Clone();
+            }
+
+            var clone = new GameState(copy, LionA, LionB, AlarmThreshold, JumpCost, GateBreakCost, TrapCost);
+            clone.ChestOpened = ChestOpened;
+            clone.Alarm = Alarm;
+            clone.Gold = Gold;
+            clone.Status = Status;
+            return clone;
+        }
+
         internal void SetPosition(LionId lion, CellPos pos)
         {
             if (lion == LionId.A)
