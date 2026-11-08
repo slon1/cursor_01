@@ -12,8 +12,9 @@ namespace Game.Config
         public int JumpCost;
         public int GateBreakCost;
         public int TrapCost;
+        public int MinCoins;
 
         public LevelData ToLevelData() =>
-            LevelMapParser.Parse(Map, AlarmThreshold, JumpCost, GateBreakCost, TrapCost);
+            LevelMapParser.Parse(Map, AlarmThreshold, JumpCost, GateBreakCost, TrapCost, MinCoins);
     }
 }

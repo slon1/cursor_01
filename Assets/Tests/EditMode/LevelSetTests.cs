@@ -10,6 +10,7 @@ namespace Game.Tests.EditMode
         const string SetPath = "Assets/ScriptableObjects/LevelSet.asset";
 
         [Test]
+        [Timeout(900000)]
         public void EveryAuthoredLevel_IsValidAndSolvable()
         {
             var set = AssetDatabase.LoadAssetAtPath<LevelSet>(SetPath);

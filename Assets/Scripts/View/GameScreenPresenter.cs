@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 namespace Game.View
 {
-    public sealed class GameScreenPresenter : MonoBehaviour
+    public sealed class GameScreenPresenter : MonoBehaviour, IAppScreen
     {
         const float BoardSize = 940f;
         const float Gap = 8f;
@@ -70,7 +70,12 @@ namespace Game.View
             endButton.onClick.RemoveAllListeners();
         }
 
-        public void Show(LevelConfig level, SpriteCatalog catalog, GameSettingsConfig settings)
+        public void Open(AppContext app, object args)
+        {
+            Show((LevelConfig)args, app.Catalog, app.Settings, app.Theme);
+        }
+
+        public void Show(LevelConfig level, SpriteCatalog catalog, GameSettingsConfig settings, UiTheme theme = null)
         {
             _catalog = catalog;
             _settings = settings;
@@ -78,6 +83,14 @@ namespace Game.View
             _session = new GameSession(level.ToLevelData());
             endOverlay.SetActive(false);
             ApplyChrome();
+            if (theme != null)
+            {
+                alarmLabel.font = theme.Heading;
+                goldLabel.font = theme.Heading;
+                endLabel.font = theme.Heading;
+                alarmLabel.color = theme.Cream;
+                goldLabel.color = theme.Gold;
+            }
             highlightRoot.gameObject.SetActive(false);
             RebuildBoard();
             Refresh(_session.State);
@@ -135,7 +148,7 @@ namespace Game.View
             PlaceToken(lionBToken, state.LionB);
             alarmLabel.text = state.Alarm + "/" + state.AlarmThreshold;
             alarmFill.fillAmount = FillOf(state.Alarm, state.AlarmThreshold);
-            goldLabel.text = _session.CollectedCoins * _settings.GoldPointsPerCoin + "/" + _session.TotalCoins * _settings.GoldPointsPerCoin;
+            goldLabel.text = LootText(_session.CollectedCoins);
             lionAButtonImage.sprite = _catalog.Get(_session.ActiveLion == LionId.A ? SpriteId.LionA_Icon_Active : SpriteId.LionA_Icon_Inactive);
             lionBButtonImage.sprite = _catalog.Get(_session.ActiveLion == LionId.B ? SpriteId.LionB_Icon_Active : SpriteId.LionB_Icon_Inactive);
             extractImage.sprite = _catalog.Get(_session.ExitReady ? SpriteId.Btn_Extract : SpriteId.Btn_Extract_Locked);
@@ -145,13 +158,13 @@ namespace Game.View
         void ShowHighlights()
         {
             foreach (var pair in _cells)
-                pair.Value.SetHighlight(null);
+                pair.Value.SetHighlight(null, 0f);
 
             var targets = _session.Targets;
             for (var i = 0; i < targets.Count; i++)
             {
                 var sprite = _catalog.Get(targets[i].Kind == MoveKind.Jump ? SpriteId.Hl_Jump : SpriteId.Hl_Step);
-                _cells[targets[i].Pos].SetHighlight(sprite);
+                _cells[targets[i].Pos].SetHighlight(sprite, _settings.HighlightAlpha);
             }
         }
 
@@ -276,7 +289,7 @@ namespace Game.View
                 Fill = alarmFill,
                 FillAmount = value => FillOf(value, _session.State.AlarmThreshold),
                 SetAlarm = value => alarmLabel.text = value + "/" + _session.State.AlarmThreshold,
-                SetGold = total => goldLabel.text = total * _settings.GoldPointsPerCoin + "/" + _session.TotalCoins * _settings.GoldPointsPerCoin,
+                SetGold = total => goldLabel.text = LootText(total),
                 Extract = extractButton.transform,
                 ChestItem = FindChestItem(),
                 EndGroup = endGroup,
@@ -328,8 +341,8 @@ namespace Game.View
             alarmFill.fillOrigin = (int)Image.OriginHorizontal.Left;
 
             var alarmRect = (RectTransform)alarmLabel.transform;
-            alarmRect.anchorMin = new Vector2(0.42f, 0.18f);
-            alarmRect.anchorMax = new Vector2(0.9f, 0.82f);
+            alarmRect.anchorMin = new Vector2(0.2f, 0.18f);
+            alarmRect.anchorMax = new Vector2(0.8f, 0.82f);
             alarmRect.offsetMin = Vector2.zero;
             alarmRect.offsetMax = Vector2.zero;
             alarmLabel.alignment = TextAlignmentOptions.Center;
@@ -340,7 +353,7 @@ namespace Game.View
             goldRect.anchorMin = goldRect.anchorMax = new Vector2(0.5f, 0.5f);
             goldRect.pivot = new Vector2(0.5f, 0.5f);
             goldRect.sizeDelta = new Vector2(280f, 56f);
-            goldRect.anchoredPosition = new Vector2(220f, -22f);
+            goldRect.anchoredPosition = new Vector2(30f, -22f);
             goldLabel.alignment = TextAlignmentOptions.Center;
             goldLabel.fontSize = 36f;
             goldLabel.textWrappingMode = TextWrappingModes.NoWrap;
@@ -374,6 +387,9 @@ namespace Game.View
             var byHeight = (BoardSize - (rows - 1) * Gap) / rows;
             return Mathf.Min(NativeCell, byWidth, byHeight);
         }
+
+        string LootText(int coins) =>
+            coins * _settings.GoldPointsPerCoin + "/" + _session.MinCoins * _settings.GoldPointsPerCoin;
 
         static float FillOf(int alarm, int threshold)
         {

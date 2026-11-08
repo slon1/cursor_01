@@ -62,7 +62,7 @@ namespace Game.Core
             if (!state.CellAt(exit).IsOpen)
                 return false;
 
-            return Adjacent(state.LionA, exit) && Adjacent(state.LionB, exit);
+            return Adjacent(state.LionA, exit) && Adjacent(state.LionB, exit) && state.Gold >= state.MinCoins;
         }
 
         static MoveResult ResolveSwap(GameState state, LionId lion, CellPos origin, CellPos target, MoveKind kind)

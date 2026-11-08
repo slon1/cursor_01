@@ -52,10 +52,11 @@ namespace Game.View
 
         public void Bind(CellPos pos) => Pos = pos;
 
-        public void SetHighlight(Sprite sprite)
+        public void SetHighlight(Sprite sprite, float alpha)
         {
             _highlight.sprite = sprite;
             _highlight.enabled = sprite != null;
+            _highlight.color = new Color(1f, 1f, 1f, alpha);
         }
 
         public void SetVisual(Sprite ground, Sprite item)

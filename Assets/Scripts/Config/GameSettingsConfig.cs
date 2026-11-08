@@ -9,6 +9,7 @@ namespace Game.Config
         public float MoveDuration = 0.18f;
         public float PopupDuration = 0.25f;
         public int GoldPointsPerCoin = 100;
+        public float HighlightAlpha = 0.5f;
         public bool DefaultSoundOn = true;
         public bool DefaultMusicOn = true;
     }

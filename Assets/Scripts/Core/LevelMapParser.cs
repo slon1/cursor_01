@@ -28,7 +28,7 @@ namespace Game.Core
             }
         }
 
-        public static LevelData Parse(string map, int alarmThreshold, int jumpCost, int gateBreakCost, int trapCost)
+        public static LevelData Parse(string map, int alarmThreshold, int jumpCost, int gateBreakCost, int trapCost, int minCoins = 0)
         {
             var rows = SplitRows(map);
             if (rows.Count == 0)
@@ -92,7 +92,7 @@ namespace Game.Core
             if (!hasB)
                 throw new FormatException("В карте нет стартовой клетки льва B.");
 
-            return new LevelData(width, height, cells, lionA, lionB, alarmThreshold, jumpCost, gateBreakCost, trapCost);
+            return new LevelData(width, height, cells, lionA, lionB, alarmThreshold, jumpCost, gateBreakCost, trapCost, minCoins);
         }
 
         static List<string> SplitRows(string map)

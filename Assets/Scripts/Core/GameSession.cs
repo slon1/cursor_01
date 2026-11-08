@@ -10,6 +10,7 @@ namespace Game.Core
         public GameState State { get; private set; }
         public LionId ActiveLion { get; private set; }
         public int TotalCoins { get; }
+        public int MinCoins => _level.MinCoins;
         public int CollectedCoins => State.Gold;
 
         public IReadOnlyList<MoveTarget> Targets =>

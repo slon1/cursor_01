@@ -9,8 +9,9 @@ namespace Game.View
         [SerializeField] LevelSet levels;
         [SerializeField] SpriteCatalog catalog;
         [SerializeField] GameSettingsConfig settings;
+        [SerializeField] UiTheme theme;
         [SerializeField] int levelNumber = 1;
 
-        void Start() => screen.Show(levels.Get(levelNumber), catalog, settings);
+        void Start() => screen.Show(levels.Get(levelNumber), catalog, settings, theme);
     }
 }

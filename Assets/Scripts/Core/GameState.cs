@@ -14,6 +14,7 @@ namespace Game.Core
         public int JumpCost { get; }
         public int GateBreakCost { get; }
         public int TrapCost { get; }
+        public int MinCoins { get; }
         public int Width => _cells.GetLength(0);
         public int Height => _cells.GetLength(1);
 
@@ -24,7 +25,8 @@ namespace Game.Core
             int alarmThreshold,
             int jumpCost,
             int gateBreakCost,
-            int trapCost)
+            int trapCost,
+            int minCoins)
         {
             _cells = cells;
             LionA = lionA;
@@ -33,6 +35,7 @@ namespace Game.Core
             JumpCost = jumpCost;
             GateBreakCost = gateBreakCost;
             TrapCost = trapCost;
+            MinCoins = minCoins;
             Status = GameStatus.Playing;
         }
 
@@ -52,7 +55,8 @@ namespace Game.Core
                 level.AlarmThreshold,
                 level.JumpCost,
                 level.GateBreakCost,
-                level.TrapCost);
+                level.TrapCost,
+                level.MinCoins);
         }
 
         public Cell CellAt(CellPos pos) => _cells[pos.X, pos.Y];
@@ -71,7 +75,7 @@ namespace Game.Core
                     copy[x, y] = _cells[x, y].Clone();
             }
 
-            var clone = new GameState(copy, LionA, LionB, AlarmThreshold, JumpCost, GateBreakCost, TrapCost);
+            var clone = new GameState(copy, LionA, LionB, AlarmThreshold, JumpCost, GateBreakCost, TrapCost, MinCoins);
             clone.ChestOpened = ChestOpened;
             clone.Alarm = Alarm;
             clone.Gold = Gold;

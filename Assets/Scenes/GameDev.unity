@@ -323,6 +323,7 @@ MonoBehaviour:
   levels: {fileID: 11400000, guid: 394f13f448c98764d9a5e6574fdb708e, type: 2}
   catalog: {fileID: 11400000, guid: 2a9648fcc66f830489397d6611b790bf, type: 2}
   settings: {fileID: 11400000, guid: 09b8950872698144e9169ba70b9d36d0, type: 2}
+  theme: {fileID: 11400000, guid: caf1af6a35d21b2438ecde021223d027, type: 2}
   levelNumber: 1
 --- !u!4 &1821034087
 Transform:

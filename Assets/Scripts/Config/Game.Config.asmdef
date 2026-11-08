@@ -2,7 +2,8 @@
     "name": "Game.Config",
     "rootNamespace": "Game.Config",
     "references": [
-        "Game.Core"
+        "Game.Core",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

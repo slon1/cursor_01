@@ -13,6 +13,7 @@ namespace Game.Core
         public int JumpCost { get; }
         public int GateBreakCost { get; }
         public int TrapCost { get; }
+        public int MinCoins { get; }
 
         public LevelData(
             int width,
@@ -23,7 +24,8 @@ namespace Game.Core
             int alarmThreshold,
             int jumpCost,
             int gateBreakCost,
-            int trapCost)
+            int trapCost,
+            int minCoins = 0)
         {
             Width = width;
             Height = height;
@@ -34,6 +36,7 @@ namespace Game.Core
             JumpCost = jumpCost;
             GateBreakCost = gateBreakCost;
             TrapCost = trapCost;
+            MinCoins = minCoins;
         }
 
         public IReadOnlyList<string> Validate()
@@ -54,8 +57,12 @@ namespace Game.Core
             if (TrapCost < 0)
                 errors.Add("Стоимость ловушки отрицательная.");
 
+            if (MinCoins < 0)
+                errors.Add("Минимальная добыча отрицательная.");
+
             var chest = 0;
             var exit = 0;
+            var gold = 0;
             if (Cells != null && Cells.GetLength(0) == Width && Cells.GetLength(1) == Height)
             {
                 for (var x = 0; x < Width; x++)
@@ -67,6 +74,8 @@ namespace Game.Core
                             chest++;
                         else if (item == ItemType.Exit)
                             exit++;
+                        else if (item == ItemType.Gold)
+                            gold++;
                     }
                 }
             }
@@ -80,6 +89,9 @@ namespace Game.Core
 
             if (exit != 1)
                 errors.Add("На поле должен быть ровно один выход.");
+
+            if (MinCoins > gold)
+                errors.Add("Минимальная добыча больше числа монет на поле.");
 
             ValidateLion(LionAStart, "A", errors);
             ValidateLion(LionBStart, "B", errors);

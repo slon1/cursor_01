@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: Level_02
   m_EditorClassIdentifier: Game.Config::Game.Config.LevelConfig
   Number: 2
-  Map: A...B/...../RRRRR/.g.c./..E..
+  Map: A###B/#g###/rrrrr/#g#c#/g#e##
   AlarmThreshold: 8
   JumpCost: 2
   GateBreakCost: 3
   TrapCost: 4
+  MinCoins: 2
