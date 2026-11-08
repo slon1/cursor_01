@@ -107,6 +107,8 @@ MonoBehaviour:
     Sprite: {fileID: -8801994063796173426, guid: 0bb3ef5d324f67c4b915fa909bfcd152, type: 3}
   - Id: 46
     Sprite: {fileID: 3726877488844736658, guid: 1fd51a651d0c8784c9dea657193ac9c7, type: 3}
+  - Id: 52
+    Sprite: {fileID: 905024258411163469, guid: b583372537147f747bc22663b52440f8, type: 3}
   - Id: 47
     Sprite: {fileID: -5575816568503637125, guid: 9e6e0bf86def4b148b2ff8a1d56d9beb, type: 3}
   - Id: 48

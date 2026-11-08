@@ -49,6 +49,7 @@ Select level/balance.png,Balance_Frame,SelectLevelUi,Фрейм с золото�
 Select level/button-back.png,Btn_Select_Back,SelectLevelUi,Выход с экрана выбора
 Select level/button-close.png,Btn_SelectPopup_Close,SelectLevelUi,Закрыть попап
 Select level/button-enter.png,Btn_SelectPopup_Enter,SelectLevelUi,Старт уровня
+Select level/light.png,Fx_LevelGlow,SelectLevelUi,Свечение вокруг выбранной кнопки уровня
 Select level/lvl-1.png,Lvl_01_Open,LevelButton,Кнопка уровня 1 (закрытой версии нет)
 Select level/lvl-2.png,Lvl_02_Open,LevelButton,
 Select level/lvl-2-close.png,Lvl_02_Locked,LevelButton,

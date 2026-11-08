@@ -53,6 +53,7 @@ namespace Game.Config
         Btn_Settings_Back,
         Btn_Settings_Rules,
         Switch_On,
-        Switch_Off
+        Switch_Off,
+        Fx_LevelGlow
     }
 }
