@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -13,11 +14,13 @@ namespace Game.View
     public sealed class EventPlayer
     {
         readonly GameSettingsConfig _settings;
+        bool _revealed;
 
         public EventPlayer(GameSettingsConfig settings) => _settings = settings;
 
         public async UniTask Play(IReadOnlyList<GameEvent> events, PlayStage stage, CancellationToken cancellation)
         {
+            _revealed = false;
             for (var i = 0; i < events.Count; i++)
                 await PlayOne(events[i], stage, cancellation);
         }
@@ -33,7 +36,7 @@ namespace Game.View
                     await Swap(swapped, stage, cancellation);
                     break;
                 case CellOpened opened:
-                    await OpenCell(stage.Cell(opened.Pos), stage, cancellation);
+                    await OpenCell(stage.Cell(opened.Pos), opened.Item, stage, cancellation);
                     break;
                 case TrapTriggered trap:
                     await ShakeToken(stage.Token(trap.Lion), true, cancellation);
@@ -42,19 +45,23 @@ namespace Game.View
                     await ShakeToken(stage.Token(blocked.Lion), false, cancellation);
                     break;
                 case GateBroken broken:
+                    await WaitToConsume(cancellation);
                     await HideItem(stage.Cell(broken.Pos), false, cancellation);
                     break;
                 case GoldCollected gold:
-                    await HideItem(stage.Cell(gold.Pos), true, cancellation);
+                    await WaitToConsume(cancellation);
                     stage.SetGold(gold.Total);
+                    await HideItem(stage.Cell(gold.Pos), true, cancellation);
                     break;
                 case LeverUsed lever:
+                    await WaitToConsume(cancellation);
                     await HideItem(stage.Cell(lever.Pos), false, cancellation);
                     break;
                 case AlarmChanged alarm:
                     await AnimateAlarm(alarm, stage, cancellation);
                     break;
                 case ChestTaken taken:
+                    await WaitToConsume(cancellation);
                     await TakeChest(stage.Cell(taken.Pos), cancellation);
                     break;
                 case ExitAttempted:
@@ -95,18 +102,32 @@ namespace Game.View
             await UniTask.WhenAll(first, second);
         }
 
-        async UniTask OpenCell(CellView cell, PlayStage stage, CancellationToken cancellation)
+        async UniTask OpenCell(CellView cell, ItemType item, PlayStage stage, CancellationToken cancellation)
         {
             var rect = (RectTransform)cell.transform;
             var scale = rect.localScale;
             await rect.DOScaleX(0f, _settings.FadeDuration * 0.35f).Await(cancellation);
-            cell.SetVisual(stage.OpenSprite, stage.ItemSprite(cell.Pos));
+            cell.SetVisual(stage.OpenSprite, item == ItemType.None ? null : stage.SpriteFor(item));
             await rect.DOScaleX(scale.x, _settings.FadeDuration * 0.35f).Await(cancellation);
-            if (cell.ItemImage.sprite == null)
+            if (item == ItemType.None)
                 return;
 
-            cell.ItemImage.color = new Color(1f, 1f, 1f, 0f);
-            await cell.ItemImage.DOFade(1f, _settings.FadeDuration * 0.4f).Await(cancellation);
+            var image = cell.ItemImage;
+            image.color = new Color(1f, 1f, 1f, 0f);
+            image.rectTransform.localScale = Vector3.one * 0.8f;
+            await UniTask.WhenAll(
+                image.DOFade(1f, _settings.FadeDuration * 0.4f).Await(cancellation),
+                image.rectTransform.DOScale(1f, _settings.FadeDuration * 0.4f).Await(cancellation));
+            _revealed = true;
+            await UniTask.Delay(TimeSpan.FromSeconds(_settings.RevealPause), cancellationToken: cancellation);
+        }
+
+        async UniTask WaitToConsume(CancellationToken cancellation)
+        {
+            if (_revealed)
+                return;
+
+            await UniTask.Delay(TimeSpan.FromSeconds(_settings.ConsumePause), cancellationToken: cancellation);
         }
 
         async UniTask ShakeToken(RectTransform token, bool red, CancellationToken cancellation)
@@ -184,7 +205,7 @@ namespace Game.View
         public System.Func<LionId, RectTransform> Token { get; set; }
         public System.Func<CellPos, Vector2> CellCenter { get; set; }
         public System.Func<CellPos, CellView> Cell { get; set; }
-        public System.Func<CellPos, Sprite> ItemSprite { get; set; }
+        public System.Func<ItemType, Sprite> SpriteFor { get; set; }
         public Sprite OpenSprite { get; set; }
         public Image Fill { get; set; }
         public System.Func<int, float> FillAmount { get; set; }

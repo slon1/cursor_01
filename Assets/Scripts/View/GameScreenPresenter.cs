@@ -430,7 +430,7 @@ namespace Game.View
                 Token = lion => lion == LionId.A ? lionAToken : lionBToken,
                 CellCenter = pos => _cells[pos].GetComponent<RectTransform>().anchoredPosition,
                 Cell = pos => _cells[pos],
-                ItemSprite = pos => ItemSprite(_session.State.CellAt(pos)),
+                SpriteFor = SpriteFor,
                 OpenSprite = _catalog.Get(SpriteId.Cell_Open),
                 Fill = alarmFill,
                 FillAmount = value => FillOf(value, _session.State.AlarmThreshold),
@@ -498,12 +498,11 @@ namespace Game.View
 
         Sprite Ground(Cell cell) => _catalog.Get(cell.IsOpen ? SpriteId.Cell_Open : SpriteId.Cell_Closed);
 
-        Sprite ItemSprite(Cell cell)
-        {
-            if (!cell.IsOpen)
-                return null;
+        Sprite ItemSprite(Cell cell) => cell.IsOpen ? SpriteFor(cell.Item) : null;
 
-            switch (cell.Item)
+        Sprite SpriteFor(ItemType item)
+        {
+            switch (item)
             {
                 case ItemType.Trap: return _catalog.Get(SpriteId.Item_Trap);
                 case ItemType.Gate: return _catalog.Get(SpriteId.Item_Gate);

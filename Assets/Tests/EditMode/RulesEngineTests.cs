@@ -93,7 +93,12 @@ namespace Game.Tests.EditMode
             Assert.AreEqual(new CellPos(1, 0), state.Position(lion));
             Assert.AreEqual(1, state.Gold);
             Assert.AreEqual(ItemType.None, state.CellAt(new CellPos(1, 0)).Item);
-            Assert.IsInstanceOf<GoldCollected>(result.Events.Single());
+            Assert.IsFalse(result.Events.OfType<CellOpened>().Any());
+            var moved = (LionMoved)result.Events[0];
+            Assert.AreEqual(lion, moved.Lion);
+            Assert.IsFalse(moved.IsJump);
+            Assert.IsInstanceOf<GoldCollected>(result.Events[1]);
+            Assert.AreEqual(2, result.Events.Count);
         }
 
         [TestCase(LionId.A)]
@@ -108,8 +113,10 @@ namespace Game.Tests.EditMode
             Assert.AreEqual(0, state.Alarm);
             Assert.AreEqual(new CellPos(1, 0), state.Position(lion));
             Assert.AreEqual(ItemType.None, state.CellAt(new CellPos(1, 0)).Item);
-            Assert.IsInstanceOf<LeverUsed>(result.Events[0]);
-            Assert.IsInstanceOf<AlarmChanged>(result.Events[1]);
+            Assert.IsFalse(result.Events.OfType<CellOpened>().Any());
+            Assert.IsInstanceOf<LionMoved>(result.Events[0]);
+            Assert.IsInstanceOf<LeverUsed>(result.Events[1]);
+            Assert.IsInstanceOf<AlarmChanged>(result.Events[2]);
         }
 
         [TestCase(LionId.A)]
@@ -249,8 +256,16 @@ namespace Game.Tests.EditMode
             Assert.AreEqual(RejectReason.None, result.Reason);
             Assert.IsFalse(between.IsOpen);
             Assert.AreEqual(ItemType.None, between.Item);
-            Assert.IsInstanceOf<CellOpened>(result.Events[0]);
-            Assert.IsInstanceOf(interaction, result.Events[1]);
+            var opened = (CellOpened)result.Events[0];
+            Assert.AreEqual(new CellPos(2, 0), opened.Pos);
+            if (contents == "g" || contents == "l")
+            {
+                var moved = (LionMoved)result.Events[1];
+                Assert.IsTrue(moved.IsJump);
+                Assert.IsInstanceOf(interaction, result.Events[2]);
+            }
+            else
+                Assert.IsInstanceOf(interaction, result.Events[1]);
             if (contents == "r")
                 Assert.AreEqual(0, state.Alarm);
             Assert.AreEqual(
@@ -687,6 +702,109 @@ namespace Game.Tests.EditMode
             Assert.AreEqual(RejectReason.InvalidShape, Move(state, LionId.A, 0, 0).Reason);
             Assert.AreEqual(RejectReason.NotAdjacent, Move(state, LionId.B, 1, 1).Reason);
             Assert.AreEqual(RejectReason.NotAdjacent, Move(state, LionId.A, 3, 0).Reason);
+        }
+
+        [Test]
+        public void ClosedGold_RevealsBeforeTheLionLands()
+        {
+            var state = LevelBuilder.Play(".g../....", 0, 0, 3, 1);
+            var result = Move(state, LionId.A, 1, 0);
+
+            var opened = (CellOpened)result.Events[0];
+            Assert.AreEqual(ItemType.Gold, opened.Item);
+            var moved = (LionMoved)result.Events[1];
+            Assert.AreEqual(new CellPos(0, 0), moved.From);
+            Assert.AreEqual(new CellPos(1, 0), moved.To);
+            Assert.IsFalse(moved.IsJump);
+            Assert.IsInstanceOf<GoldCollected>(result.Events[2]);
+            Assert.AreEqual(3, result.Events.Count);
+        }
+
+        [Test]
+        public void ClosedLever_RevealsBeforeTheLionLands()
+        {
+            var state = LevelBuilder.Play(".l../T...", 0, 0, 3, 1);
+            Move(state, LionId.A, 0, 1);
+            var result = Move(state, LionId.A, 1, 0);
+
+            var opened = (CellOpened)result.Events[0];
+            Assert.AreEqual(ItemType.Lever, opened.Item);
+            Assert.IsInstanceOf<LionMoved>(result.Events[1]);
+            Assert.IsInstanceOf<LeverUsed>(result.Events[2]);
+            Assert.IsInstanceOf<AlarmChanged>(result.Events[3]);
+        }
+
+        [Test]
+        public void ClosedGate_LionB_OpensWithoutAMove()
+        {
+            var state = LevelBuilder.Play(".r../....", 3, 1, 0, 0);
+            var result = Move(state, LionId.B, 1, 0);
+
+            var opened = (CellOpened)result.Events[0];
+            Assert.AreEqual(ItemType.Gate, opened.Item);
+            Assert.IsInstanceOf<GateBroken>(result.Events[1]);
+            Assert.IsFalse(result.Events.OfType<LionMoved>().Any());
+            Assert.AreEqual(new CellPos(0, 0), state.LionB);
+        }
+
+        [Test]
+        public void ClosedGate_LionA_OpensWithoutAMove()
+        {
+            var state = LevelBuilder.Play(".r../....", 0, 0, 3, 1);
+            var result = Move(state, LionId.A, 1, 0);
+
+            Assert.AreEqual(ItemType.Gate, ((CellOpened)result.Events[0]).Item);
+            Assert.IsInstanceOf<GateBlocked>(result.Events[1]);
+            Assert.IsFalse(result.Events.OfType<LionMoved>().Any());
+            Assert.AreEqual(2, result.Events.Count);
+        }
+
+        [Test]
+        public void ClosedTrap_OpensWithoutAMove()
+        {
+            var state = LevelBuilder.Play(".t../....", 0, 0, 3, 1);
+            var result = Move(state, LionId.A, 1, 0);
+
+            Assert.AreEqual(ItemType.Trap, ((CellOpened)result.Events[0]).Item);
+            Assert.IsInstanceOf<TrapTriggered>(result.Events[1]);
+            Assert.IsFalse(result.Events.OfType<LionMoved>().Any());
+            Assert.AreEqual(new CellPos(0, 0), state.LionA);
+        }
+
+        [Test]
+        public void ClosedEmpty_OpensThenTheLionSteps()
+        {
+            var state = LevelBuilder.Play(".#../....", 0, 0, 3, 1);
+            var result = Move(state, LionId.A, 1, 0);
+
+            Assert.AreEqual(ItemType.None, ((CellOpened)result.Events[0]).Item);
+            Assert.IsInstanceOf<LionMoved>(result.Events[1]);
+            Assert.AreEqual(2, result.Events.Count);
+        }
+
+        [Test]
+        public void OpenGold_MovesBeforeItIsCollected()
+        {
+            var state = LevelBuilder.Play(".G../....", 0, 0, 3, 1);
+            var result = Move(state, LionId.A, 1, 0);
+
+            Assert.IsFalse(result.Events.OfType<CellOpened>().Any());
+            Assert.IsInstanceOf<LionMoved>(result.Events[0]);
+            Assert.IsInstanceOf<GoldCollected>(result.Events[1]);
+        }
+
+        [Test]
+        public void Jump_OntoClosedGold_RevealsThenJumps()
+        {
+            var state = LevelBuilder.Play(".#g./....", 0, 0, 3, 1);
+            var result = Move(state, LionId.A, 2, 0);
+
+            Assert.AreEqual(ItemType.Gold, ((CellOpened)result.Events[0]).Item);
+            var moved = (LionMoved)result.Events[1];
+            Assert.IsTrue(moved.IsJump);
+            Assert.AreEqual(new CellPos(0, 0), moved.From);
+            Assert.AreEqual(new CellPos(2, 0), moved.To);
+            Assert.IsInstanceOf<GoldCollected>(result.Events[2]);
         }
 
         static GameState ActorAtOrigin(LionId lion, string map)

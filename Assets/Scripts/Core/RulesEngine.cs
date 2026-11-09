@@ -85,10 +85,11 @@ namespace Game.Core
             var alarmBefore = state.Alarm;
             var cell = state.CellAt(target);
             var startedClosed = !cell.IsOpen;
+            var revealed = cell.Item;
             if (startedClosed)
             {
                 cell.IsOpen = true;
-                events.Add(new CellOpened(target));
+                events.Add(new CellOpened(target, revealed));
             }
 
             var landed = false;
@@ -123,12 +124,14 @@ namespace Game.Core
                     state.SetPosition(lion, target);
                     state.Gold += 1;
                     cell.Item = ItemType.None;
+                    events.Add(new LionMoved(lion, origin, target, kind == MoveKind.Jump));
                     events.Add(new GoldCollected(target, lion, state.Gold));
                     landed = true;
                     break;
                 case ItemType.Lever:
                     state.SetPosition(lion, target);
                     cell.Item = ItemType.None;
+                    events.Add(new LionMoved(lion, origin, target, kind == MoveKind.Jump));
                     events.Add(new LeverUsed(target, lion));
                     landed = true;
                     resetAlarm = true;

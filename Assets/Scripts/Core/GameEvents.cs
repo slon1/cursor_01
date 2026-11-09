@@ -6,7 +6,7 @@ namespace Game.Core
 
     public sealed record LionsSwapped(CellPos PosA, CellPos PosB, LionId Initiator, bool IsJump) : GameEvent;
 
-    public sealed record CellOpened(CellPos Pos) : GameEvent;
+    public sealed record CellOpened(CellPos Pos, ItemType Item) : GameEvent;
 
     public sealed record TrapTriggered(CellPos Pos, LionId Lion) : GameEvent;
 
