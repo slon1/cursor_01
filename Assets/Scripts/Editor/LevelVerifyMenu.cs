@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Game.Config;
 using Game.Core;
 using UnityEditor;
@@ -11,7 +10,12 @@ namespace Game.EditorTools
         const string SetPath = "Assets/ScriptableObjects/LevelSet.asset";
 
         [MenuItem("Tools/Levels/Verify All Levels")]
-        public static void VerifyAll()
+        public static void VerifyAll() => Verify(SolveMode.FindAny);
+
+        [MenuItem("Tools/Levels/Verify All Levels (Shortest)")]
+        public static void VerifyShortest() => Verify(SolveMode.Shortest);
+
+        static void Verify(SolveMode mode)
         {
             var set = AssetDatabase.LoadAssetAtPath<LevelSet>(SetPath);
             if (set == null)
@@ -24,16 +28,16 @@ namespace Game.EditorTools
             {
                 var level = set.Get(number).ToLevelData();
                 var errors = level.Validate();
-                var watch = Stopwatch.StartNew();
-                var solved = LevelSolver.TrySolve(level);
-                watch.Stop();
+                var solved = LevelSolver.Solve(level, new SolveOptions { Mode = mode });
                 Debug.Log(
                     "Уровень " + number
+                    + " режим=" + mode
                     + " Solvable=" + solved.Solvable
-                    + " MinMoves=" + solved.MinMoves
-                    + " MinAlarmAtWin=" + solved.MinAlarmAtWin
+                    + " ходов=" + solved.MinMoves
+                    + " AlarmAtWin=" + solved.AlarmAtWin
                     + " состояния=" + solved.StatesExplored
-                    + " мс=" + watch.ElapsedMilliseconds
+                    + " мс=" + solved.ElapsedMs
+                    + (solved.Truncated ? " Truncated" : "")
                     + (errors.Count == 0 ? "" : " проверка=" + string.Join("; ", errors)));
             }
         }

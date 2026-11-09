@@ -35,7 +35,7 @@ namespace Game.Tests.EditMode
             Assert.IsTrue(result.Solvable);
             Assert.IsFalse(result.Truncated);
             Assert.Greater(result.MinMoves, 0);
-            Assert.GreaterOrEqual(result.MinAlarmAtWin, 0);
+            Assert.GreaterOrEqual(result.AlarmAtWin, 0);
             Assert.Greater(result.StatesExplored, 1);
         }
 
@@ -48,7 +48,7 @@ namespace Game.Tests.EditMode
             Assert.IsFalse(result.Solvable);
             Assert.IsFalse(result.Truncated);
             Assert.AreEqual(0, result.MinMoves);
-            Assert.AreEqual(0, result.MinAlarmAtWin);
+            Assert.AreEqual(0, result.AlarmAtWin);
         }
 
         [Test]
@@ -60,6 +60,90 @@ namespace Game.Tests.EditMode
             Assert.IsTrue(result.Truncated);
             Assert.IsFalse(result.Solvable);
             Assert.AreEqual(1, result.StatesExplored);
+        }
+
+        [Test]
+        public void FindAny_SmallMap_PathWinsWhenReplayed()
+        {
+            var level = LevelMapParser.Parse("A.B/.C./.E.", 10, 2, 3, 4);
+            var result = LevelSolver.Solve(level, new SolveOptions { Mode = SolveMode.FindAny });
+
+            Assert.IsTrue(result.Solvable);
+            Assert.IsFalse(result.Truncated);
+            Assert.Greater(result.Path.Count, 0);
+            var session = Replay(level, result.Path);
+            Assert.AreEqual(GameStatus.Won, session.State.Status);
+            Assert.AreEqual(result.AlarmAtWin, session.State.Alarm);
+        }
+
+        [Test]
+        public void FindAny_UnreachableChestAndExit_IsNotSolvable()
+        {
+            var level = LevelMapParser.Parse("A.B/RRR/RRR/RRR/.CE", 5, 2, 3, 4);
+            var result = LevelSolver.Solve(level, new SolveOptions { Mode = SolveMode.FindAny });
+
+            Assert.IsFalse(result.Solvable);
+            Assert.IsFalse(result.Truncated);
+            Assert.AreEqual(0, result.Path.Count);
+        }
+
+        [Test]
+        public void FindAny_LowStateCap_Truncates()
+        {
+            var level = LevelMapParser.Parse("A.B/.C./.E.", 10, 2, 3, 4);
+            var result = LevelSolver.Solve(level, new SolveOptions { Mode = SolveMode.FindAny, MaxStates = 1 });
+
+            Assert.IsTrue(result.Truncated);
+            Assert.IsFalse(result.Solvable);
+            Assert.AreEqual(1, result.StatesExplored);
+        }
+
+        [Test]
+        public void FindAny_TwoRuns_ReturnTheSamePath()
+        {
+            var level = LevelMapParser.Parse("A.B/.C./gE.", 10, 2, 3, 4, 1);
+            var first = LevelSolver.Solve(level, new SolveOptions { Mode = SolveMode.FindAny });
+            var second = LevelSolver.Solve(level, new SolveOptions { Mode = SolveMode.FindAny });
+
+            Assert.IsTrue(first.Solvable);
+            Assert.AreEqual(first.Path.Count, second.Path.Count);
+            for (var i = 0; i < first.Path.Count; i++)
+            {
+                Assert.AreEqual(first.Path[i].Lion, second.Path[i].Lion);
+                Assert.AreEqual(first.Path[i].Target, second.Path[i].Target);
+            }
+        }
+
+        [Test]
+        public void FindAny_AuthoredLevels_PathsWin()
+        {
+            var set = UnityEditor.AssetDatabase.LoadAssetAtPath<Game.Config.LevelSet>("Assets/ScriptableObjects/LevelSet.asset");
+            Assert.IsNotNull(set);
+            for (var number = 1; number <= set.Count; number++)
+            {
+                var level = set.Get(number).ToLevelData();
+                var result = LevelSolver.Solve(level, new SolveOptions { Mode = SolveMode.FindAny });
+                Assert.IsTrue(result.Solvable, "Уровень " + number);
+                Assert.IsFalse(result.Truncated, "Уровень " + number);
+                var session = Replay(level, result.Path);
+                Assert.AreEqual(GameStatus.Won, session.State.Status, "Уровень " + number);
+                Assert.AreEqual(result.AlarmAtWin, session.State.Alarm, "Уровень " + number);
+            }
+        }
+
+        static GameSession Replay(LevelData level, System.Collections.Generic.IReadOnlyList<SolverMove> path)
+        {
+            var session = new GameSession(level);
+            for (var i = 0; i < path.Count; i++)
+            {
+                session.SelectLion(path[i].Lion);
+                var move = session.TapCell(path[i].Target);
+                Assert.IsTrue(move.Accepted, path[i].Lion + " " + path[i].Target);
+            }
+
+            Assert.IsTrue(session.ExitReady);
+            Assert.IsTrue(session.TryExtract().Accepted);
+            return session;
         }
     }
 }

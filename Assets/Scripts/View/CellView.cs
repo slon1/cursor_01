@@ -25,17 +25,6 @@ namespace Game.View
             view._background = root.GetComponent<Image>();
             view._background.raycastTarget = true;
 
-            var highlightObject = new GameObject("Highlight", typeof(RectTransform), typeof(Image));
-            highlightObject.transform.SetParent(root.transform, false);
-            var highlightRect = (RectTransform)highlightObject.transform;
-            highlightRect.anchorMin = Vector2.zero;
-            highlightRect.anchorMax = Vector2.one;
-            highlightRect.offsetMin = Vector2.zero;
-            highlightRect.offsetMax = Vector2.zero;
-            view._highlight = highlightObject.GetComponent<Image>();
-            view._highlight.raycastTarget = false;
-            view._highlight.enabled = false;
-
             var itemObject = new GameObject("Item", typeof(RectTransform), typeof(Image));
             itemObject.transform.SetParent(root.transform, false);
             var itemRect = (RectTransform)itemObject.transform;
@@ -47,6 +36,17 @@ namespace Game.View
             view._item.raycastTarget = false;
             view._item.preserveAspect = true;
             view._item.enabled = false;
+
+            var highlightObject = new GameObject("Highlight", typeof(RectTransform), typeof(Image));
+            highlightObject.transform.SetParent(root.transform, false);
+            var highlightRect = (RectTransform)highlightObject.transform;
+            highlightRect.anchorMin = Vector2.zero;
+            highlightRect.anchorMax = Vector2.one;
+            highlightRect.offsetMin = Vector2.zero;
+            highlightRect.offsetMax = Vector2.zero;
+            view._highlight = highlightObject.GetComponent<Image>();
+            view._highlight.raycastTarget = false;
+            view._highlight.enabled = false;
             return view;
         }
 

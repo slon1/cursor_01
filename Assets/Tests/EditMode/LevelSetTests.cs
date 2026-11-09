@@ -31,7 +31,9 @@ namespace Game.Tests.EditMode
             var set = Load();
             for (var number = 1; number <= set.Count; number++)
             {
-                var solved = LevelSolver.TrySolve(set.Get(number).ToLevelData());
+                var solved = LevelSolver.Solve(
+                    set.Get(number).ToLevelData(),
+                    new SolveOptions { Mode = SolveMode.FindAny });
                 Assert.IsTrue(solved.Solvable, "Уровень " + number);
                 Assert.IsFalse(solved.Truncated, "Уровень " + number);
             }
