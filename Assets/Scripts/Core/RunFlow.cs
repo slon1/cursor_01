@@ -11,7 +11,7 @@ namespace Game.Core
             storage.Save(progress.HighestUnlockedLevel, progress.BalancePoints);
         }
 
-        public static bool ShowNext(int level, int authoredCount) => level >= 1 && level < authoredCount;
+        public static bool ShowNext(int level, bool hasNext) => level >= 1 && hasNext;
 
         public static bool NodeOpen(PlayerProgress progress, bool hasConfig, int level) =>
             progress.IsUnlocked(level) && hasConfig;

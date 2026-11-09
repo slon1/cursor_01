@@ -29,11 +29,13 @@ namespace Game.Tests.EditMode
         }
 
         [Test]
-        public void ShowNext_OnlyWhenTheNextLevelExists()
+        public void ShowNext_OnlyWhenTheNextConfigExists()
         {
-            Assert.IsTrue(RunFlow.ShowNext(1, 3));
-            Assert.IsTrue(RunFlow.ShowNext(2, 3));
-            Assert.IsFalse(RunFlow.ShowNext(3, 3));
+            var set = AssetDatabase.LoadAssetAtPath<LevelSet>("Assets/ScriptableObjects/LevelSet.asset");
+            Assert.IsTrue(RunFlow.ShowNext(1, set.Has(2)));
+            Assert.IsTrue(RunFlow.ShowNext(2, set.Has(3)));
+            Assert.IsFalse(RunFlow.ShowNext(3, set.Has(4)));
+            Assert.IsFalse(RunFlow.ShowNext(1, false));
         }
 
         [Test]

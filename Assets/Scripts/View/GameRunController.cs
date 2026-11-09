@@ -12,7 +12,7 @@ namespace Game.View
         public void Apply(GameResult result) =>
             RunFlow.Finish(_app.Progress, _app.ProgressStore, result.Won, result.Level, result.Coins, _app.Settings.GoldPointsPerCoin);
 
-        public bool HasNext(int level) => RunFlow.ShowNext(level, _app.Levels.Count);
+        public bool HasNext(int level) => RunFlow.ShowNext(level, _app.Levels.Has(level + 1));
 
         public UniTask Next(int level) =>
             _app.Screens.ShowAsync(ScreenId.Game, _app.Levels.Get(level), false);

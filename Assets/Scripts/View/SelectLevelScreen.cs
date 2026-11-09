@@ -65,6 +65,9 @@ namespace Game.View
             var rect = (RectTransform)nodes[level - 1].transform;
             if (!open)
             {
+                rect.DOKill();
+                if (nodePositions != null && level - 1 < nodePositions.Length)
+                    rect.anchoredPosition = nodePositions[level - 1];
                 rect.DOShakeAnchorPos(_app.Settings.PopupDuration, new Vector2(14f, 0f), 14);
                 return;
             }
@@ -97,6 +100,13 @@ namespace Game.View
         {
             if (glow != null)
                 glow.transform.DOKill();
+            if (nodes == null)
+                return;
+            for (var i = 0; i < nodes.Length; i++)
+            {
+                if (nodes[i] != null)
+                    nodes[i].transform.DOKill();
+            }
         }
     }
 }
