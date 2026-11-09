@@ -15,6 +15,9 @@ namespace Game.View
 
         void Start()
         {
+            Application.targetFrameRate = 60;
+            QualitySettings.vSyncCount = 0;
+
             var progress = new PlayerProgress();
             var progressStorage = new PlayerPrefsProgressStorage();
             if (progressStorage.TryLoad(out var level, out var balance))
@@ -33,6 +36,14 @@ namespace Game.View
             };
             app.Run = new GameRunController(app);
             screens.Bind(app);
+            var back = GetComponent<BackHandler>();
+            if (back == null)
+                back = gameObject.AddComponent<BackHandler>();
+            back.Bind(app);
+            var lifecycle = GetComponent<AppLifecycle>();
+            if (lifecycle == null)
+                lifecycle = gameObject.AddComponent<AppLifecycle>();
+            lifecycle.Bind(app);
             screens.ShowAsync(ScreenId.Menu, null, false).Forget();
         }
     }

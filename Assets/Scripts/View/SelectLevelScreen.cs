@@ -26,6 +26,8 @@ namespace Game.View
         AppContext _app;
         int _selected;
 
+        public bool PopupOpen => popup != null && popup.activeSelf;
+
         public void Open(AppContext app, object args)
         {
             _app = app;
@@ -89,7 +91,7 @@ namespace Game.View
             glow.transform.DOScale(1.08f, _app.Settings.PopupDuration).SetLoops(-1, LoopType.Yoyo);
         }
 
-        void ClosePopup()
+        public void ClosePopup()
         {
             popup.SetActive(false);
             glow.transform.DOKill();

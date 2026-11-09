@@ -25,6 +25,10 @@ namespace Game.View
         AppContext _app;
         bool _busy;
 
+        public ScreenId? Current => _current;
+        public bool IsBusy => _busy;
+        public GameObject CurrentInstance => _instance;
+
         public void Bind(AppContext app)
         {
             _app = app;

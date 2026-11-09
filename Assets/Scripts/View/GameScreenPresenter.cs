@@ -69,6 +69,8 @@ namespace Game.View
         readonly Dictionary<CellPos, CellView> _cells = new Dictionary<CellPos, CellView>();
         CancellationTokenSource _play;
         bool _inputLocked;
+        bool _moveAnimating;
+        bool _pauseWhenIdle;
         float _cellSize = NativeCell;
 
         void Awake()
@@ -247,11 +249,7 @@ namespace Game.View
                 }
                 finally
                 {
-                    if (_session.State.Status == GameStatus.Playing)
-                    {
-                        _inputLocked = false;
-                        SetButtonsInteractable(true);
-                    }
+                    ReleaseAfterAnimation();
                 }
 
                 return;
@@ -265,6 +263,7 @@ namespace Game.View
         async UniTask PlayEvents(IReadOnlyList<GameEvent> events)
         {
             _inputLocked = true;
+            _moveAnimating = true;
             SetButtonsInteractable(false);
             _play?.Cancel();
             _play?.Dispose();
@@ -275,16 +274,61 @@ namespace Game.View
                 Buzz(events);
                 await _player.Play(events, BuildStage(), cancellation.Token);
                 Refresh(_session.State);
-                if (_session.State.Status == GameStatus.Playing)
+                if (_session.State.Status == GameStatus.Playing && !_pauseWhenIdle)
                     SetButtonsInteractable(true);
-                else
+                else if (_session.State.Status != GameStatus.Playing)
                     ShowResult(_session.State.Status == GameStatus.Won);
             }
             finally
             {
+                _moveAnimating = false;
                 cancellation.Dispose();
-                _inputLocked = _session.State.Status != GameStatus.Playing;
+                ReleaseAfterAnimation();
             }
+        }
+
+        void ReleaseAfterAnimation()
+        {
+            if (_session == null)
+                return;
+            if (_pauseWhenIdle && _session.State.Status == GameStatus.Playing && !PauseOpen && !RoundOver)
+            {
+                _pauseWhenIdle = false;
+                _inputLocked = false;
+                OnPause();
+                return;
+            }
+
+            _inputLocked = _session.State.Status != GameStatus.Playing;
+            if (_session.State.Status == GameStatus.Playing && !PauseOpen)
+                SetButtonsInteractable(true);
+        }
+
+        public bool MoveBusy => _moveAnimating;
+        public bool PauseOpen => pauseOverlay != null && pauseOverlay.activeSelf;
+        public bool RoundOver =>
+            (winOverlay != null && winOverlay.activeSelf) ||
+            (loseOverlay != null && loseOverlay.activeSelf);
+
+        public void OpenPauseFromBack() => OnPause();
+
+        public void ResumeFromBack()
+        {
+            if (PauseOpen)
+                ClosePause();
+        }
+
+        public void SuspendMatch()
+        {
+            if (_session == null || _session.State.Status != GameStatus.Playing || RoundOver || PauseOpen)
+                return;
+            if (_moveAnimating || _inputLocked)
+            {
+                _pauseWhenIdle = true;
+                return;
+            }
+
+            OnPause();
         }
 
         void OnPause()

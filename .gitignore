@@ -73,6 +73,9 @@ mono_crash.*
 # Builds
 *.apk
 *.aab
+*.keystore
+*.jks
+keystore.local.json
 *.unitypackage
 *.unitypackage.meta
 *.app
