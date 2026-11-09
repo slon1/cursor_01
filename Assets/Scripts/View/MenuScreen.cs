@@ -15,11 +15,7 @@ namespace Game.View
 
         public void Open(AppContext app, object args)
         {
-            play.onClick.AddListener(() =>
-            {
-                // Play ведёт сразу на уровень 1, заменить на SelectLevel в 5B.
-                app.Screens.ShowAsync(ScreenId.Game, app.Levels.Get(1), false).Forget();
-            });
+            play.onClick.AddListener(() => app.Screens.ShowAsync(ScreenId.SelectLevel).Forget());
             rules.onClick.AddListener(() => app.Screens.ShowAsync(ScreenId.Rules).Forget());
             settings.onClick.AddListener(() => app.Screens.ShowAsync(ScreenId.Settings).Forget());
 

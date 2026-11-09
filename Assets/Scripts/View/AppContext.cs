@@ -10,6 +10,8 @@ namespace Game.View
         public GameSettingsConfig Settings;
         public UiTheme Theme;
         public PlayerProgress Progress;
+        public IProgressStorage ProgressStore;
+        public GameRunController Run;
         public SettingsService Options;
         public ScreenManager Screens;
     }

@@ -40,8 +40,29 @@ namespace Game.View
         [SerializeField] CanvasGroup endGroup;
         [SerializeField] TMP_Text endLabel;
         [SerializeField] Button endButton;
+        [SerializeField] GameObject pauseOverlay;
+        [SerializeField] Button resumeButton;
+        [SerializeField] Button restartButton;
+        [SerializeField] Button pauseMenuButton;
+        [SerializeField] GameObject winOverlay;
+        [SerializeField] TMP_Text winLoot;
+        [SerializeField] TMP_Text winTarget;
+        [SerializeField] Button winNext;
+        [SerializeField] Button winSelect;
+        [SerializeField] GameObject loseOverlay;
+        [SerializeField] TMP_Text loseLoot;
+        [SerializeField] TMP_Text loseTarget;
+        [SerializeField] Button loseRetry;
+        [SerializeField] Button loseSelect;
+
+        public event System.Action<GameResult> Finished;
 
         GameSession _session;
+        LevelConfig _level;
+        AppContext _app;
+        bool _popup;
+        Vector2 _winNextHome;
+        Vector2 _winSelectHome;
         SpriteCatalog _catalog;
         GameSettingsConfig _settings;
         EventPlayer _player;
@@ -57,6 +78,21 @@ namespace Game.View
             lionBButton.onClick.AddListener(() => OnSelectLion(LionId.B));
             extractButton.onClick.AddListener(() => OnExtract().Forget());
             endButton.onClick.AddListener(OnRestart);
+            if (resumeButton != null)
+                resumeButton.onClick.AddListener(ClosePause);
+            if (restartButton != null)
+                restartButton.onClick.AddListener(RestartFromPause);
+            if (pauseMenuButton != null)
+                pauseMenuButton.onClick.AddListener(() => LeaveToMenu().Forget());
+            if (winNext != null)
+            {
+                _winNextHome = ((RectTransform)winNext.transform).anchoredPosition;
+                _winSelectHome = ((RectTransform)winSelect.transform).anchoredPosition;
+                winNext.onClick.AddListener(() => OpenLevel(_level.Number + 1).Forget());
+                winSelect.onClick.AddListener(() => OpenSelect().Forget());
+                loseRetry.onClick.AddListener(OnRestart);
+                loseSelect.onClick.AddListener(() => OpenSelect().Forget());
+            }
         }
 
         void OnDestroy()
@@ -72,16 +108,27 @@ namespace Game.View
 
         public void Open(AppContext app, object args)
         {
+            _app = app;
+            if (app.Run != null)
+                Finished += app.Run.Apply;
             Show((LevelConfig)args, app.Catalog, app.Settings, app.Theme);
         }
 
         public void Show(LevelConfig level, SpriteCatalog catalog, GameSettingsConfig settings, UiTheme theme = null)
         {
+            _level = level;
             _catalog = catalog;
             _settings = settings;
             _player = new EventPlayer(settings);
             _session = new GameSession(level.ToLevelData());
+            _popup = false;
             endOverlay.SetActive(false);
+            if (pauseOverlay != null)
+                pauseOverlay.SetActive(false);
+            if (winOverlay != null)
+                winOverlay.SetActive(false);
+            if (loseOverlay != null)
+                loseOverlay.SetActive(false);
             ApplyChrome();
             if (theme != null)
             {
@@ -225,17 +272,13 @@ namespace Game.View
             var cancellation = CancellationTokenSource.CreateLinkedTokenSource(_play.Token, this.GetCancellationTokenOnDestroy());
             try
             {
+                Buzz(events);
                 await _player.Play(events, BuildStage(), cancellation.Token);
+                Refresh(_session.State);
                 if (_session.State.Status == GameStatus.Playing)
-                {
-                    Refresh(_session.State);
                     SetButtonsInteractable(true);
-                }
                 else
-                {
-                    Refresh(_session.State);
-                    endOverlay.SetActive(true);
-                }
+                    ShowResult(_session.State.Status == GameStatus.Won);
             }
             finally
             {
@@ -246,9 +289,107 @@ namespace Game.View
 
         void OnPause()
         {
-            if (_inputLocked)
+            if (_inputLocked || _popup || _session == null || _session.State.Status != GameStatus.Playing)
                 return;
-            Debug.Log("Пауза");
+
+            _popup = true;
+            _inputLocked = true;
+            SetButtonsInteractable(false);
+            pauseOverlay.SetActive(true);
+        }
+
+        void ClosePause()
+        {
+            pauseOverlay.SetActive(false);
+            _popup = false;
+            _inputLocked = false;
+            SetButtonsInteractable(true);
+        }
+
+        void RestartFromPause()
+        {
+            pauseOverlay.SetActive(false);
+            _popup = false;
+            OnRestart();
+        }
+
+        void ShowResult(bool won)
+        {
+            _popup = true;
+            _inputLocked = true;
+            SetButtonsInteractable(false);
+            var points = _settings.GoldPointsPerCoin;
+            var loot = (_session.CollectedCoins * points).ToString();
+            var target = (_session.MinCoins * points).ToString();
+            Finished?.Invoke(new GameResult(won, _level.Number, _session.CollectedCoins));
+
+            if (won)
+            {
+                Style(winLoot, _app);
+                Style(winTarget, _app);
+                winLoot.text = loot;
+                winTarget.text = target;
+                var next = _app != null && _app.Run.HasNext(_level.Number);
+                winNext.gameObject.SetActive(next);
+                ((RectTransform)winSelect.transform).anchoredPosition = next ? _winSelectHome : _winNextHome;
+                winOverlay.SetActive(true);
+            }
+            else
+            {
+                Style(loseLoot, _app);
+                Style(loseTarget, _app);
+                loseLoot.text = loot;
+                loseTarget.text = target;
+                loseOverlay.SetActive(true);
+            }
+        }
+
+        static void Style(TMP_Text label, AppContext app)
+        {
+            if (app == null)
+                return;
+            label.font = app.Theme.Heading;
+            label.color = app.Theme.Gold;
+        }
+
+        async UniTask OpenLevel(int number)
+        {
+            if (_app == null)
+                return;
+            await _app.Run.Next(number);
+        }
+
+        async UniTask OpenSelect()
+        {
+            if (_app == null)
+                return;
+            await _app.Run.Select();
+        }
+
+        async UniTask LeaveToMenu()
+        {
+            if (_app == null)
+                return;
+            await _app.Run.Menu();
+        }
+
+        void Buzz(IReadOnlyList<GameEvent> events)
+        {
+            if (_app == null || !_app.Options.Data.Vibration)
+                return;
+
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (events[i] is TrapTriggered || events[i] is GameLost)
+                    Vibrate();
+            }
+        }
+
+        static void Vibrate()
+        {
+#if UNITY_ANDROID || UNITY_IOS
+            Handheld.Vibrate();
+#endif
         }
 
         void OnSelectLion(LionId lion)
@@ -263,6 +404,11 @@ namespace Game.View
         {
             _session.Restart();
             endOverlay.SetActive(false);
+            if (winOverlay != null)
+                winOverlay.SetActive(false);
+            if (loseOverlay != null)
+                loseOverlay.SetActive(false);
+            _popup = false;
             _inputLocked = false;
             RebuildBoard();
             Refresh(_session.State);

@@ -27,9 +27,11 @@ namespace Game.View
                 Settings = settings,
                 Theme = theme,
                 Progress = progress,
+                ProgressStore = progressStorage,
                 Options = new SettingsService(new PlayerPrefsSettingsStorage()),
                 Screens = screens
             };
+            app.Run = new GameRunController(app);
             screens.Bind(app);
             screens.ShowAsync(ScreenId.Menu, null, false).Forget();
         }

@@ -65,6 +65,14 @@ namespace Game.View
             }
         }
 
+        public void ClearHistory() => _back.Clear();
+
+        public void SetReturnTo(ScreenId id)
+        {
+            _back.Clear();
+            _back.Push(id);
+        }
+
         public async UniTask BackAsync()
         {
             if (_busy || _back.Count == 0)

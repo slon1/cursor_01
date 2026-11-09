@@ -61,10 +61,7 @@ namespace Game.View
                     await Pulse(stage.Extract, cancellation);
                     break;
                 case GameWon:
-                    await ShowEnd(stage, "WIN", cancellation);
-                    break;
                 case GameLost:
-                    await ShowEnd(stage, "LOSE", cancellation);
                     break;
             }
         }
@@ -166,12 +163,6 @@ namespace Game.View
             target.localScale = scale;
         }
 
-        async UniTask ShowEnd(PlayStage stage, string title, CancellationToken cancellation)
-        {
-            stage.ShowEnd(title);
-            stage.EndGroup.alpha = 0f;
-            await stage.EndGroup.DOFade(1f, _settings.PopupDuration).Await(cancellation);
-        }
     }
 
     public sealed class PlayStage
