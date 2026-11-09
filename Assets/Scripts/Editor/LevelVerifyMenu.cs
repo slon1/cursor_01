@@ -29,6 +29,15 @@ namespace Game.EditorTools
                 var level = set.Get(number).ToLevelData();
                 var errors = level.Validate();
                 var solved = LevelSolver.Solve(level, new SolveOptions { Mode = mode });
+                var threshold = "";
+                if (mode == SolveMode.FindAny)
+                {
+                    var min = LevelSolver.MinSolvableThreshold(level, level.AlarmThreshold, new SolveOptions());
+                    threshold = " MinValue=" + min.Value
+                        + " Exact=" + min.Exact
+                        + " MinTruncated=" + min.Truncated;
+                }
+
                 Debug.Log(
                     "Уровень " + number
                     + " режим=" + mode
@@ -38,6 +47,7 @@ namespace Game.EditorTools
                     + " состояния=" + solved.StatesExplored
                     + " мс=" + solved.ElapsedMs
                     + (solved.Truncated ? " Truncated" : "")
+                    + threshold
                     + (errors.Count == 0 ? "" : " проверка=" + string.Join("; ", errors)));
             }
         }

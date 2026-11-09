@@ -43,7 +43,7 @@ namespace Game.Tests.EditMode
         {
             var set = AssetDatabase.LoadAssetAtPath<LevelSet>(SetPath);
             Assert.IsNotNull(set, "Нет " + SetPath);
-            Assert.AreEqual(3, set.Count);
+            Assert.AreEqual(10, set.Count);
             return set;
         }
     }
