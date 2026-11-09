@@ -341,12 +341,12 @@ namespace Game.View
             alarmFill.fillOrigin = (int)Image.OriginHorizontal.Left;
 
             var alarmRect = (RectTransform)alarmLabel.transform;
-            alarmRect.anchorMin = new Vector2(0.2f, 0.18f);
-            alarmRect.anchorMax = new Vector2(0.8f, 0.82f);
-            alarmRect.offsetMin = Vector2.zero;
-            alarmRect.offsetMax = Vector2.zero;
-            alarmLabel.alignment = TextAlignmentOptions.Center;
-            alarmLabel.fontSize = 46f;
+            alarmRect.anchorMin = alarmRect.anchorMax = new Vector2(0.5f, 0.5f);
+            alarmRect.pivot = new Vector2(0f, 0.5f);
+            alarmRect.sizeDelta = new Vector2(220f, 72f);
+            alarmRect.anchoredPosition = new Vector2(138f, -22f);
+            alarmLabel.alignment = TextAlignmentOptions.MidlineLeft;
+            alarmLabel.fontSize = 52f;
             alarmLabel.textWrappingMode = TextWrappingModes.NoWrap;
 
             var goldRect = (RectTransform)goldLabel.transform;

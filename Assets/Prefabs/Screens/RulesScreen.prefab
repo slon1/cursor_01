@@ -176,6 +176,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0fc539c1d29aa4d4eb812765e3020ebf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.View::Game.View.RulesScreen
+  back: {fileID: 5783521597367468275}
 --- !u!1 &5436542364397178725
 GameObject:
   m_ObjectHideFlags: 0

@@ -498,6 +498,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0606157a47ce17e48bd7e00e0af3e91a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.View::Game.View.SettingsScreen
+  musicButton: {fileID: 1956979107690893866}
+  soundButton: {fileID: 549508294444339653}
+  vibrationButton: {fileID: 6315336688254575543}
+  musicImage: {fileID: 152304414667542988}
+  soundImage: {fileID: 8536509678722140450}
+  vibrationImage: {fileID: 6587657987705435964}
+  rules: {fileID: 4160335565693275295}
+  back: {fileID: 877796868800242332}
 --- !u!1 &5214397740219877573
 GameObject:
   m_ObjectHideFlags: 0

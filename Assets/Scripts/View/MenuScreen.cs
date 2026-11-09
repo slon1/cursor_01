@@ -8,23 +8,25 @@ namespace Game.View
 {
     public sealed class MenuScreen : MonoBehaviour, IAppScreen
     {
+        [SerializeField] Button play;
+        [SerializeField] Button rules;
+        [SerializeField] Button settings;
+        [SerializeField] TMP_Text haulValue;
+
         public void Open(AppContext app, object args)
         {
-            var stage = transform.Find("Stage");
-            Button(stage, "Btn_Menu_Play").onClick.AddListener(() =>
+            play.onClick.AddListener(() =>
             {
                 // Play ведёт сразу на уровень 1, заменить на SelectLevel в 5B.
                 app.Screens.ShowAsync(ScreenId.Game, app.Levels.Get(1), false).Forget();
             });
-            Button(stage, "Btn_Menu_Rules").onClick.AddListener(() => app.Screens.ShowAsync(ScreenId.Rules).Forget());
-            Button(stage, "Btn_Menu_Settings").onClick.AddListener(() => app.Screens.ShowAsync(ScreenId.Settings).Forget());
+            rules.onClick.AddListener(() => app.Screens.ShowAsync(ScreenId.Rules).Forget());
+            settings.onClick.AddListener(() => app.Screens.ShowAsync(ScreenId.Settings).Forget());
 
-            var haul = stage.Find("HaulValue").GetComponent<TMP_Text>();
-            haul.font = app.Theme.Heading;
-            haul.color = app.Theme.Gold;
-            haul.text = app.Progress.BalancePoints.ToString("N0", CultureInfo.InvariantCulture);
+            haulValue.font = app.Theme.Heading;
+            haulValue.color = app.Theme.Gold;
+            haulValue.fontSize = 59f;
+            haulValue.text = app.Progress.BalancePoints.ToString("N0", CultureInfo.InvariantCulture);
         }
-
-        static Button Button(Transform stage, string name) => stage.Find(name).GetComponent<Button>();
     }
 }

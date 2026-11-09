@@ -63,6 +63,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f1fcf64a776a3f4ca7cb55ff80f6350, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.View::Game.View.MenuScreen
+  play: {fileID: 1704456751304406603}
+  rules: {fileID: 70924035957211205}
+  settings: {fileID: 2311084677742821256}
+  haulValue: {fileID: 4099251764750005878}
 --- !u!1 &4796784111135520330
 GameObject:
   m_ObjectHideFlags: 0
@@ -425,8 +429,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 42
-  m_fontSizeBase: 42
+  m_fontSize: 59
+  m_fontSizeBase: 59
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
