@@ -437,7 +437,6 @@ namespace Game.View
                 SetAlarm = value => alarmLabel.text = value + "/" + _session.State.AlarmThreshold,
                 SetGold = total => goldLabel.text = LootText(total),
                 Extract = extractButton.transform,
-                ChestItem = FindChestItem(),
                 EndGroup = endGroup,
                 ShowEnd = title =>
                 {
@@ -446,17 +445,6 @@ namespace Game.View
                 },
                 CellSize = _cellSize
             };
-        }
-
-        Transform FindChestItem()
-        {
-            foreach (var pair in _cells)
-            {
-                if (_session.State.CellAt(pair.Key).Item == ItemType.Chest)
-                    return pair.Value.ItemImage.transform;
-            }
-
-            return null;
         }
 
         void PlaceToken(RectTransform token, CellPos pos) =>

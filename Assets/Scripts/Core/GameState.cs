@@ -6,7 +6,7 @@ namespace Game.Core
 
         public CellPos LionA { get; internal set; }
         public CellPos LionB { get; internal set; }
-        public bool ChestOpened { get; internal set; }
+        public bool ChestTaken { get; internal set; }
         public int Alarm { get; internal set; }
         public int Gold { get; internal set; }
         public GameStatus Status { get; internal set; }
@@ -76,7 +76,7 @@ namespace Game.Core
             }
 
             var clone = new GameState(copy, LionA, LionB, AlarmThreshold, JumpCost, GateBreakCost, TrapCost, MinCoins);
-            clone.ChestOpened = ChestOpened;
+            clone.ChestTaken = ChestTaken;
             clone.Alarm = Alarm;
             clone.Gold = Gold;
             clone.Status = Status;

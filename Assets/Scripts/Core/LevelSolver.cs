@@ -129,7 +129,7 @@ namespace Game.Core
         {
             var text = state.LionA.X + "," + state.LionA.Y + ";"
                 + state.LionB.X + "," + state.LionB.Y + ";"
-                + (state.ChestOpened ? "1" : "0") + ";"
+                + (state.ChestTaken ? "1" : "0") + ";"
                 + state.Alarm + ";"
                 + state.Gold + ";";
             for (var y = 0; y < state.Height; y++)

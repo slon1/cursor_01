@@ -22,7 +22,7 @@ namespace Game.Core
                 return ResolveSwap(state, lion, origin, target, kind);
 
             var cell = state.CellAt(target);
-            if (cell.Item == ItemType.Chest && cell.IsOpen)
+            if (cell.Item == ItemType.Chest && cell.IsOpen && !Adjacent(other, target))
                 return Reject(RejectReason.TargetIsChest);
 
             if (cell.Item == ItemType.Gate && lion == LionId.A && cell.IsOpen)
@@ -56,7 +56,7 @@ namespace Game.Core
 
         public static bool ExitConditionsMet(GameState state)
         {
-            if (!state.ChestOpened || !TryFind(state, ItemType.Exit, out var exit))
+            if (!state.ChestTaken || !TryFind(state, ItemType.Exit, out var exit))
                 return false;
 
             if (!state.CellAt(exit).IsOpen)
@@ -84,7 +84,8 @@ namespace Game.Core
             var events = new List<GameEvent>();
             var alarmBefore = state.Alarm;
             var cell = state.CellAt(target);
-            if (!cell.IsOpen)
+            var startedClosed = !cell.IsOpen;
+            if (startedClosed)
             {
                 cell.IsOpen = true;
                 events.Add(new CellOpened(target));
@@ -108,6 +109,15 @@ namespace Game.Core
                     alarmCost += state.GateBreakCost;
                     break;
                 case ItemType.Chest:
+                    if (startedClosed)
+                        break;
+
+                    state.SetPosition(lion, target);
+                    cell.Item = ItemType.None;
+                    state.ChestTaken = true;
+                    events.Add(new LionMoved(lion, origin, target, kind == MoveKind.Jump));
+                    events.Add(new ChestTaken(target, lion));
+                    landed = true;
                     break;
                 case ItemType.Gold:
                     state.SetPosition(lion, target);
@@ -149,32 +159,11 @@ namespace Game.Core
             if (state.Alarm != alarmBefore)
                 events.Add(new AlarmChanged(alarmBefore, state.Alarm));
 
-            TryOpenChest(state, events);
-
             if (state.Alarm >= state.AlarmThreshold)
             {
                 state.Status = GameStatus.Lost;
                 events.Add(new GameLost());
             }
-        }
-
-        static void TryOpenChest(GameState state, List<GameEvent> events)
-        {
-            if (state.ChestOpened || !TryFind(state, ItemType.Chest, out var chest))
-                return;
-
-            if (!Adjacent(state.LionA, chest) || !Adjacent(state.LionB, chest))
-                return;
-
-            var cell = state.CellAt(chest);
-            if (!cell.IsOpen)
-            {
-                cell.IsOpen = true;
-                events.Add(new CellOpened(chest));
-            }
-
-            state.ChestOpened = true;
-            events.Add(new ChestOpened());
         }
 
         static void AddRange(GameState state, LionId lion, CellPos origin, int distance, MoveKind kind, List<MoveTarget> targets)
@@ -201,7 +190,7 @@ namespace Game.Core
                 return true;
 
             if (cell.Item == ItemType.Chest)
-                return false;
+                return Adjacent(state.Position(Other(lion)), pos);
 
             if (lion == LionId.A && cell.Item == ItemType.Gate)
                 return false;

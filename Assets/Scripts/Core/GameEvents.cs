@@ -20,7 +20,7 @@ namespace Game.Core
 
     public sealed record AlarmChanged(int OldValue, int NewValue) : GameEvent;
 
-    public sealed record ChestOpened : GameEvent;
+    public sealed record ChestTaken(CellPos Pos, LionId Lion) : GameEvent;
 
     public sealed record ExitAttempted(bool ConditionsMet) : GameEvent;
 

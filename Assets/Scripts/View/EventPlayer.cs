@@ -54,8 +54,8 @@ namespace Game.View
                 case AlarmChanged alarm:
                     await AnimateAlarm(alarm, stage, cancellation);
                     break;
-                case ChestOpened:
-                    await Pulse(stage.ChestItem, cancellation);
+                case ChestTaken taken:
+                    await TakeChest(stage.Cell(taken.Pos), cancellation);
                     break;
                 case ExitAttempted:
                     await Pulse(stage.Extract, cancellation);
@@ -153,6 +153,20 @@ namespace Game.View
             await UniTask.WhenAll(fill, text);
         }
 
+        async UniTask TakeChest(CellView cell, CancellationToken cancellation)
+        {
+            var item = cell.ItemImage;
+            if (item.sprite == null)
+                return;
+
+            var rect = item.rectTransform;
+            await UniTask.WhenAll(
+                item.DOFade(0f, _settings.FadeDuration).Await(cancellation),
+                rect.DOScale(1.3f, _settings.FadeDuration).Await(cancellation));
+            item.enabled = false;
+            rect.localScale = Vector3.one;
+        }
+
         async UniTask Pulse(Transform target, CancellationToken cancellation)
         {
             if (target == null)
@@ -177,7 +191,6 @@ namespace Game.View
         public System.Action<int> SetAlarm { get; set; }
         public System.Action<int> SetGold { get; set; }
         public Transform Extract { get; set; }
-        public Transform ChestItem { get; set; }
         public CanvasGroup EndGroup { get; set; }
         public System.Action<string> ShowEnd { get; set; }
         public float CellSize { get; set; }

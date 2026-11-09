@@ -64,7 +64,7 @@ namespace Game.Tests.EditMode
             session.SelectLion(LionId.B);
             session.TapCell(new CellPos(2, 1));
             session.SelectLion(LionId.A);
-            session.TapCell(new CellPos(0, 2));
+            session.TapCell(new CellPos(1, 1));
             session.SelectLion(LionId.B);
             session.TapCell(new CellPos(2, 2));
 
