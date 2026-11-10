@@ -34,7 +34,8 @@ namespace Game.Tests.EditMode
             var set = AssetDatabase.LoadAssetAtPath<LevelSet>("Assets/ScriptableObjects/LevelSet.asset");
             Assert.IsTrue(RunFlow.ShowNext(1, set.Has(2)));
             Assert.IsTrue(RunFlow.ShowNext(2, set.Has(3)));
-            Assert.IsFalse(RunFlow.ShowNext(3, set.Has(4)));
+            Assert.IsTrue(RunFlow.ShowNext(3, set.Has(4)));
+            Assert.IsFalse(RunFlow.ShowNext(10, set.Has(11)));
             Assert.IsFalse(RunFlow.ShowNext(1, false));
         }
 

@@ -38,6 +38,8 @@ namespace Game.Core
         IReadOnlyList<SolverMove> Path,
         long ElapsedMs);
 
+    public sealed record MinThresholdResult(int Value, bool Exact, bool Truncated);
+
     public static class LevelSolver
     {
         const int CellLimit = 64;
@@ -58,6 +60,30 @@ namespace Game.Core
 
         public static SolveResult TrySolve(LevelData level, int maxStates = 2_000_000) =>
             Solve(level, new SolveOptions { Mode = SolveMode.Shortest, MaxStates = maxStates });
+
+        public static MinThresholdResult MinSolvableThreshold(LevelData level, int maxThreshold, SolveOptions options)
+        {
+            var truncated = false;
+            for (var threshold = 1; threshold <= maxThreshold; threshold++)
+            {
+                var solved = Solve(level.WithAlarmThreshold(threshold), new SolveOptions
+                {
+                    Mode = SolveMode.FindAny,
+                    MaxStates = options.MaxStates,
+                    TimeLimitMs = options.TimeLimitMs
+                });
+                if (solved.Truncated)
+                {
+                    truncated = true;
+                    continue;
+                }
+
+                if (solved.Solvable)
+                    return new MinThresholdResult(threshold, !truncated, truncated);
+            }
+
+            return new MinThresholdResult(-1, false, truncated);
+        }
 
         static SolveResult BestFirst(LevelData level, SolveOptions options, Stopwatch watch)
         {
@@ -276,16 +302,16 @@ namespace Game.Core
 
         static StateKey Capture(LevelData level, GameState state)
         {
-            ulong open = 0;
             ulong removed = 0;
+            var chestOpen = false;
             var bit = 0;
             for (var y = 0; y < level.Height; y++)
             {
                 for (var x = 0; x < level.Width; x++)
                 {
                     var cell = state.CellAt(new CellPos(x, y));
-                    if (cell.IsOpen)
-                        open |= 1UL << bit;
+                    if (level.Cells[x, y].Item == ItemType.Chest)
+                        chestOpen = cell.IsOpen;
                     if (level.Cells[x, y].Item != ItemType.None && cell.Item == ItemType.None)
                         removed |= 1UL << bit;
                     bit++;
@@ -293,7 +319,7 @@ namespace Game.Core
             }
 
             return new StateKey(
-                open,
+                chestOpen,
                 removed,
                 (byte)state.LionA.X,
                 (byte)state.LionA.Y,
@@ -317,7 +343,7 @@ namespace Game.Core
                 {
                     var cell = state.CellAt(new CellPos(x, y));
                     var original = level.Cells[x, y].Item;
-                    cell.IsOpen = (key.Open & (1UL << bit)) != 0;
+                    cell.IsOpen = original == ItemType.Chest && key.ChestOpen;
                     if ((key.Removed & (1UL << bit)) != 0)
                     {
                         if (original == ItemType.Gold)
@@ -417,7 +443,7 @@ namespace Game.Core
 
         readonly struct StateKey : IEquatable<StateKey>
         {
-            public readonly ulong Open;
+            public readonly bool ChestOpen;
             public readonly ulong Removed;
             public readonly byte Ax;
             public readonly byte Ay;
@@ -425,9 +451,9 @@ namespace Game.Core
             public readonly byte By;
             public readonly bool Chest;
 
-            public StateKey(ulong open, ulong removed, byte ax, byte ay, byte bx, byte by, bool chest)
+            public StateKey(bool chestOpen, ulong removed, byte ax, byte ay, byte bx, byte by, bool chest)
             {
-                Open = open;
+                ChestOpen = chestOpen;
                 Removed = removed;
                 Ax = ax;
                 Ay = ay;
@@ -437,7 +463,7 @@ namespace Game.Core
             }
 
             public bool Equals(StateKey other) =>
-                Open == other.Open
+                ChestOpen == other.ChestOpen
                 && Removed == other.Removed
                 && Ax == other.Ax
                 && Ay == other.Ay
@@ -451,7 +477,7 @@ namespace Game.Core
             {
                 unchecked
                 {
-                    var hash = (int)Open ^ (int)(Open >> 32);
+                    var hash = ChestOpen ? 1 : 0;
                     hash = hash * 397 ^ (int)Removed ^ (int)(Removed >> 32);
                     hash = hash * 397 ^ Ax;
                     hash = hash * 397 ^ Ay;

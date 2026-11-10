@@ -115,20 +115,165 @@ namespace Game.Tests.EditMode
         }
 
         [Test]
+        public void FindAny_ClosedChest_OpensBeforeTake()
+        {
+            var level = LevelMapParser.Parse("A.B/.c./.E.", 10, 2, 3, 4);
+            var result = LevelSolver.Solve(level, new SolveOptions { Mode = SolveMode.FindAny });
+
+            Assert.IsTrue(result.Solvable);
+            Assert.IsFalse(result.Truncated);
+            var session = new GameSession(level);
+            var opened = false;
+            var taken = false;
+            for (var i = 0; i < result.Path.Count; i++)
+            {
+                session.SelectLion(result.Path[i].Lion);
+                var move = session.TapCell(result.Path[i].Target);
+                Assert.IsTrue(move.Accepted);
+                var openedNow = false;
+                var takenNow = false;
+                for (var e = 0; e < move.Events.Count; e++)
+                {
+                    if (move.Events[e] is CellOpened cell && cell.Item == ItemType.Chest)
+                        openedNow = true;
+                    if (move.Events[e] is ChestTaken)
+                        takenNow = true;
+                }
+
+                if (openedNow)
+                {
+                    Assert.IsFalse(takenNow);
+                    Assert.IsFalse(session.State.ChestTaken);
+                    opened = true;
+                }
+
+                if (takenNow)
+                {
+                    Assert.IsTrue(opened);
+                    taken = true;
+                }
+            }
+
+            Assert.IsTrue(opened);
+            Assert.IsTrue(taken);
+            Assert.IsTrue(session.ExitReady);
+            Assert.IsTrue(session.TryExtract().Accepted);
+            Assert.AreEqual(GameStatus.Won, session.State.Status);
+        }
+
+        [Test]
+        public void Shortest_OpenBitsExceptChest_DoNotChangeLength()
+        {
+            var options = new SolveOptions { Mode = SolveMode.Shortest, TimeLimitMs = 5000 };
+            var closed = LevelSolver.Solve(LevelMapParser.Parse("A#B/#c#/#e#", 10, 2, 3, 4), options);
+            var open = LevelSolver.Solve(LevelMapParser.Parse("A.B/.c./.e.", 10, 2, 3, 4), options);
+
+            Assert.IsTrue(closed.Solvable);
+            Assert.IsTrue(open.Solvable);
+            Assert.IsFalse(closed.Truncated);
+            Assert.IsFalse(open.Truncated);
+            Assert.AreEqual(open.MinMoves, closed.MinMoves);
+            Assert.AreEqual(open.AlarmAtWin, closed.AlarmAtWin);
+        }
+
+        [Test]
+        public void Shortest_ClosedChest_TakesOneExtraMove()
+        {
+            var options = new SolveOptions { Mode = SolveMode.Shortest, TimeLimitMs = 5000 };
+            var closed = LevelSolver.Solve(LevelMapParser.Parse("A.B/.c./.E.", 10, 2, 3, 4), options);
+            var open = LevelSolver.Solve(LevelMapParser.Parse("A.B/.C./.E.", 10, 2, 3, 4), options);
+
+            Assert.IsTrue(closed.Solvable);
+            Assert.IsTrue(open.Solvable);
+            Assert.IsFalse(closed.Truncated);
+            Assert.IsFalse(open.Truncated);
+            Assert.AreEqual(open.MinMoves + 1, closed.MinMoves);
+        }
+
+        [Test]
+        public void WithAlarmThreshold_SharesCellsAndKeepsOriginal()
+        {
+            var level = LevelMapParser.Parse("A.B/.C./.E.", 10, 2, 3, 4);
+            var copy = level.WithAlarmThreshold(4);
+
+            Assert.AreEqual(10, level.AlarmThreshold);
+            Assert.AreEqual(4, copy.AlarmThreshold);
+            Assert.AreSame(level.Cells, copy.Cells);
+            Assert.AreEqual(level.JumpCost, copy.JumpCost);
+            Assert.AreEqual(level.MinCoins, copy.MinCoins);
+        }
+
+        [Test]
+        public void MinSolvableThreshold_GateWall_Is4()
+        {
+            var level = LevelMapParser.Parse("A.B./rrrr/..C./.E..", 10, 2, 3, 4);
+            var result = LevelSolver.MinSolvableThreshold(level, 10, new SolveOptions());
+
+            Assert.AreEqual(4, result.Value);
+            Assert.IsTrue(result.Exact);
+            Assert.IsFalse(result.Truncated);
+        }
+
+        [Test]
+        public void MinSolvableThreshold_StateCap_IsNotAFailure()
+        {
+            var level = LevelMapParser.Parse("A.B/.C./.E.", 10, 2, 3, 4);
+            var result = LevelSolver.MinSolvableThreshold(level, 3, new SolveOptions { MaxStates = 1 });
+
+            Assert.AreEqual(-1, result.Value);
+            Assert.IsFalse(result.Exact);
+            Assert.IsTrue(result.Truncated);
+        }
+
+        [Test]
+        public void MinSolvableThreshold_Unreachable_IsExactMiss()
+        {
+            var level = LevelMapParser.Parse("A.B/RRR/RRR/RRR/.CE", 5, 2, 3, 4);
+            var result = LevelSolver.MinSolvableThreshold(level, 5, new SolveOptions());
+
+            Assert.AreEqual(-1, result.Value);
+            Assert.IsFalse(result.Exact);
+            Assert.IsFalse(result.Truncated);
+        }
+
+        [Test]
+        public void MinSolvableThreshold_FirstThreeLevels_MatchPort()
+        {
+            var set = UnityEditor.AssetDatabase.LoadAssetAtPath<Game.Config.LevelSet>("Assets/ScriptableObjects/LevelSet.asset");
+            Assert.IsNotNull(set);
+            var expected = new[] { 1, 4, 1 };
+            for (var number = 1; number <= 3; number++)
+            {
+                var level = set.Get(number).ToLevelData();
+                var result = LevelSolver.MinSolvableThreshold(level, level.AlarmThreshold, new SolveOptions());
+                Assert.AreEqual(expected[number - 1], result.Value, "Уровень " + number);
+                Assert.IsTrue(result.Exact, "Уровень " + number);
+                Assert.IsFalse(result.Truncated, "Уровень " + number);
+            }
+        }
+
+        [Test]
         public void FindAny_AuthoredLevels_PathsWin()
         {
             var set = UnityEditor.AssetDatabase.LoadAssetAtPath<Game.Config.LevelSet>("Assets/ScriptableObjects/LevelSet.asset");
             Assert.IsNotNull(set);
+            var watch = System.Diagnostics.Stopwatch.StartNew();
             for (var number = 1; number <= set.Count; number++)
             {
                 var level = set.Get(number).ToLevelData();
+                var started = watch.ElapsedMilliseconds;
                 var result = LevelSolver.Solve(level, new SolveOptions { Mode = SolveMode.FindAny });
+                var levelMs = watch.ElapsedMilliseconds - started;
+                TestContext.WriteLine("Уровень " + number + " мс=" + levelMs + " состояния=" + result.StatesExplored);
+                Assert.LessOrEqual(levelMs, 10000, "Уровень " + number + " дольше 10 секунд");
                 Assert.IsTrue(result.Solvable, "Уровень " + number);
                 Assert.IsFalse(result.Truncated, "Уровень " + number);
                 var session = Replay(level, result.Path);
                 Assert.AreEqual(GameStatus.Won, session.State.Status, "Уровень " + number);
                 Assert.AreEqual(result.AlarmAtWin, session.State.Alarm, "Уровень " + number);
             }
+
+            Assert.LessOrEqual(watch.ElapsedMilliseconds, 60000, "Весь тест дольше 60 секунд");
         }
 
         static GameSession Replay(LevelData level, System.Collections.Generic.IReadOnlyList<SolverMove> path)

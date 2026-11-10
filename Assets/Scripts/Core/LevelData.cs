@@ -39,6 +39,19 @@ namespace Game.Core
             MinCoins = minCoins;
         }
 
+        public LevelData WithAlarmThreshold(int alarmThreshold) =>
+            new LevelData(
+                Width,
+                Height,
+                Cells,
+                LionAStart,
+                LionBStart,
+                alarmThreshold,
+                JumpCost,
+                GateBreakCost,
+                TrapCost,
+                MinCoins);
+
         public IReadOnlyList<string> Validate()
         {
             var errors = new List<string>();
