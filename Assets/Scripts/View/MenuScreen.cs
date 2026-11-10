@@ -1,5 +1,6 @@
 using System.Globalization;
 using Cysharp.Threading.Tasks;
+using Game.Config;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,9 +16,9 @@ namespace Game.View
 
         public void Open(AppContext app, object args)
         {
-            play.onClick.AddListener(() => app.Screens.ShowAsync(ScreenId.SelectLevel).Forget());
-            rules.onClick.AddListener(() => app.Screens.ShowAsync(ScreenId.Rules).Forget());
-            settings.onClick.AddListener(() => app.Screens.ShowAsync(ScreenId.Settings).Forget());
+            play.onClick.AddListener(() => { app.Sfx?.Play(SfxId.Tap); app.Screens.ShowAsync(ScreenId.SelectLevel).Forget(); });
+            rules.onClick.AddListener(() => { app.Sfx?.Play(SfxId.Tap); app.Screens.ShowAsync(ScreenId.Rules).Forget(); });
+            settings.onClick.AddListener(() => { app.Sfx?.Play(SfxId.Tap); app.Screens.ShowAsync(ScreenId.Settings).Forget(); });
 
             haulValue.font = app.Theme.Heading;
             haulValue.color = app.Theme.Gold;

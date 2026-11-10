@@ -14,9 +14,14 @@ namespace Game.View
     public sealed class EventPlayer
     {
         readonly GameSettingsConfig _settings;
+        readonly SoundManager _sfx;
         bool _revealed;
 
-        public EventPlayer(GameSettingsConfig settings) => _settings = settings;
+        public EventPlayer(GameSettingsConfig settings, SoundManager sfx = null)
+        {
+            _settings = settings;
+            _sfx = sfx;
+        }
 
         public async UniTask Play(IReadOnlyList<GameEvent> events, PlayStage stage, CancellationToken cancellation)
         {
@@ -30,30 +35,38 @@ namespace Game.View
             switch (gameEvent)
             {
                 case LionMoved moved:
+                    Cue(moved.IsJump ? SfxId.Jump : SfxId.Step);
                     await MoveToken(stage.Token(moved.Lion), stage.CellCenter(moved.To), moved.IsJump, stage, cancellation);
                     break;
                 case LionsSwapped swapped:
+                    Cue(swapped.IsJump ? SfxId.Jump : SfxId.Step);
                     await Swap(swapped, stage, cancellation);
                     break;
                 case CellOpened opened:
+                    Cue(SfxId.Open);
                     await OpenCell(stage.Cell(opened.Pos), opened.Item, stage, cancellation);
                     break;
                 case TrapTriggered trap:
+                    Cue(SfxId.Hit);
                     await ShakeToken(stage.Token(trap.Lion), true, cancellation);
                     break;
                 case GateBlocked blocked:
+                    Cue(SfxId.Hit);
                     await ShakeToken(stage.Token(blocked.Lion), false, cancellation);
                     break;
                 case GateBroken broken:
+                    Cue(SfxId.Break);
                     await WaitToConsume(cancellation);
                     await HideItem(stage.Cell(broken.Pos), false, cancellation);
                     break;
                 case GoldCollected gold:
+                    Cue(SfxId.Gold);
                     await WaitToConsume(cancellation);
                     stage.SetGold(gold.Total);
                     await HideItem(stage.Cell(gold.Pos), true, cancellation);
                     break;
                 case LeverUsed lever:
+                    Cue(SfxId.Lever);
                     await WaitToConsume(cancellation);
                     await HideItem(stage.Cell(lever.Pos), false, cancellation);
                     break;
@@ -61,14 +74,20 @@ namespace Game.View
                     await AnimateAlarm(alarm, stage, cancellation);
                     break;
                 case ChestTaken taken:
+                    Cue(SfxId.Chest);
                     await WaitToConsume(cancellation);
                     await TakeChest(stage.Cell(taken.Pos), cancellation);
                     break;
-                case ExitAttempted:
+                case ExitAttempted attempted:
+                    if (!attempted.ConditionsMet)
+                        Cue(SfxId.Hit);
                     await Pulse(stage.Extract, cancellation);
                     break;
                 case GameWon:
+                    Cue(SfxId.Win);
+                    break;
                 case GameLost:
+                    Cue(SfxId.Lose);
                     break;
             }
         }
@@ -197,6 +216,8 @@ namespace Game.View
             await target.DOScale(scale * 1.12f, _settings.PopupDuration * 0.5f).SetLoops(2, LoopType.Yoyo).Await(cancellation);
             target.localScale = scale;
         }
+
+        void Cue(SfxId id) => _sfx?.Play(id);
 
     }
 

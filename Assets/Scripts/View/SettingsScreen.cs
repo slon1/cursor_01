@@ -24,11 +24,11 @@ namespace Game.View
         {
             _options = app.Options;
             _catalog = app.Catalog;
-            musicButton.onClick.AddListener(() => _options.SetMusic(!_options.Data.Music));
-            soundButton.onClick.AddListener(() => _options.SetSound(!_options.Data.Sound));
-            vibrationButton.onClick.AddListener(() => _options.SetVibration(!_options.Data.Vibration));
-            rules.onClick.AddListener(() => app.Screens.ShowAsync(ScreenId.Rules).Forget());
-            back.onClick.AddListener(() => app.Screens.BackAsync().Forget());
+            musicButton.onClick.AddListener(() => { app.Sfx?.Play(SfxId.Tap); _options.SetMusic(!_options.Data.Music); });
+            soundButton.onClick.AddListener(() => ToggleSound(app));
+            vibrationButton.onClick.AddListener(() => { app.Sfx?.Play(SfxId.Tap); _options.SetVibration(!_options.Data.Vibration); });
+            rules.onClick.AddListener(() => { app.Sfx?.Play(SfxId.Tap); app.Screens.ShowAsync(ScreenId.Rules).Forget(); });
+            back.onClick.AddListener(() => { app.Sfx?.Play(SfxId.Tap); app.Screens.BackAsync().Forget(); });
             _options.Changed += Refresh;
             Refresh();
         }
@@ -37,6 +37,19 @@ namespace Game.View
         {
             if (_options != null)
                 _options.Changed -= Refresh;
+        }
+
+        void ToggleSound(AppContext app)
+        {
+            if (_options.Data.Sound)
+            {
+                app.Sfx?.Play(SfxId.Tap);
+                _options.SetSound(false);
+                return;
+            }
+
+            _options.SetSound(true);
+            app.Sfx?.Play(SfxId.Tap);
         }
 
         void Refresh()

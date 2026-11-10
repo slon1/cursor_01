@@ -31,10 +31,10 @@ namespace Game.View
         public void Open(AppContext app, object args)
         {
             _app = app;
-            back.onClick.AddListener(() => app.Screens.BackAsync().Forget());
-            dim.onClick.AddListener(ClosePopup);
-            closePopup.onClick.AddListener(ClosePopup);
-            enter.onClick.AddListener(() => app.Screens.ShowAsync(ScreenId.Game, app.Levels.Get(_selected)).Forget());
+            back.onClick.AddListener(() => { app.Sfx?.Play(SfxId.Tap); app.Screens.BackAsync().Forget(); });
+            dim.onClick.AddListener(() => { app.Sfx?.Play(SfxId.Tap); ClosePopup(); });
+            closePopup.onClick.AddListener(() => { app.Sfx?.Play(SfxId.Tap); ClosePopup(); });
+            enter.onClick.AddListener(() => { app.Sfx?.Play(SfxId.Tap); app.Screens.ShowAsync(ScreenId.Game, app.Levels.Get(_selected)).Forget(); });
             popup.SetActive(false);
             glow.gameObject.SetActive(false);
             glow.sprite = app.Catalog.Get(SpriteId.Fx_LevelGlow);
@@ -63,6 +63,7 @@ namespace Game.View
 
         void OnNode(int level)
         {
+            _app.Sfx?.Play(SfxId.Tap);
             var open = RunFlow.NodeOpen(_app.Progress, _app.Levels.Has(level), level);
             var rect = (RectTransform)nodes[level - 1].transform;
             if (!open)

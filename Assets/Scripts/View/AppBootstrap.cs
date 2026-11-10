@@ -12,6 +12,7 @@ namespace Game.View
         [SerializeField] GameSettingsConfig settings;
         [SerializeField] UiTheme theme;
         [SerializeField] ScreenManager screens;
+        [SerializeField] SoundManager sfx;
 
         void Start()
         {
@@ -32,8 +33,11 @@ namespace Game.View
                 Progress = progress,
                 ProgressStore = progressStorage,
                 Options = new SettingsService(new PlayerPrefsSettingsStorage()),
-                Screens = screens
+                Screens = screens,
+                Sfx = sfx
             };
+            if (sfx != null)
+                sfx.Bind(app.Options);
             app.Run = new GameRunController(app);
             screens.Bind(app);
             var back = GetComponent<BackHandler>();

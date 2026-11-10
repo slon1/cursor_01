@@ -75,25 +75,25 @@ namespace Game.View
 
         void Awake()
         {
-            pauseButton.onClick.AddListener(OnPause);
-            lionAButton.onClick.AddListener(() => OnSelectLion(LionId.A));
-            lionBButton.onClick.AddListener(() => OnSelectLion(LionId.B));
+            pauseButton.onClick.AddListener(() => { Tap(); OnPause(); });
+            lionAButton.onClick.AddListener(() => { Tap(); OnSelectLion(LionId.A); });
+            lionBButton.onClick.AddListener(() => { Tap(); OnSelectLion(LionId.B); });
             extractButton.onClick.AddListener(() => OnExtract().Forget());
-            endButton.onClick.AddListener(OnRestart);
+            endButton.onClick.AddListener(() => { Tap(); OnRestart(); });
             if (resumeButton != null)
-                resumeButton.onClick.AddListener(ClosePause);
+                resumeButton.onClick.AddListener(() => { Tap(); ClosePause(); });
             if (restartButton != null)
-                restartButton.onClick.AddListener(RestartFromPause);
+                restartButton.onClick.AddListener(() => { Tap(); RestartFromPause(); });
             if (pauseMenuButton != null)
-                pauseMenuButton.onClick.AddListener(() => LeaveToMenu().Forget());
+                pauseMenuButton.onClick.AddListener(() => { Tap(); LeaveToMenu().Forget(); });
             if (winNext != null)
             {
                 _winNextHome = ((RectTransform)winNext.transform).anchoredPosition;
                 _winSelectHome = ((RectTransform)winSelect.transform).anchoredPosition;
-                winNext.onClick.AddListener(() => OpenLevel(_level.Number + 1).Forget());
-                winSelect.onClick.AddListener(() => OpenSelect().Forget());
-                loseRetry.onClick.AddListener(OnRestart);
-                loseSelect.onClick.AddListener(() => OpenSelect().Forget());
+                winNext.onClick.AddListener(() => { Tap(); OpenLevel(_level.Number + 1).Forget(); });
+                winSelect.onClick.AddListener(() => { Tap(); OpenSelect().Forget(); });
+                loseRetry.onClick.AddListener(() => { Tap(); OnRestart(); });
+                loseSelect.onClick.AddListener(() => { Tap(); OpenSelect().Forget(); });
             }
         }
 
@@ -121,7 +121,7 @@ namespace Game.View
             _level = level;
             _catalog = catalog;
             _settings = settings;
-            _player = new EventPlayer(settings);
+            _player = new EventPlayer(settings, ResolveSfx());
             _session = new GameSession(level.ToLevelData());
             _popup = false;
             endOverlay.SetActive(false);
@@ -435,6 +435,15 @@ namespace Game.View
             Handheld.Vibrate();
 #endif
         }
+
+        SoundManager ResolveSfx()
+        {
+            if (_app != null && _app.Sfx != null)
+                return _app.Sfx;
+            return FindAnyObjectByType<SoundManager>();
+        }
+
+        void Tap() => ResolveSfx()?.Play(SfxId.Tap);
 
         void OnSelectLion(LionId lion)
         {

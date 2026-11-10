@@ -14,6 +14,7 @@ namespace Game.View
         public GameRunController Run;
         public SettingsService Options;
         public ScreenManager Screens;
+        public SoundManager Sfx;
     }
 
     public interface IAppScreen

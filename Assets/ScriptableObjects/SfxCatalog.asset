@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea30e2bc0621e774d80f3c4d89527635, type: 3}
+  m_Name: SfxCatalog
+  m_EditorClassIdentifier: Game.Config::Game.Config.SfxCatalog
+  Tap: {fileID: 8300000, guid: 5f2c41f96a993ad4b8e6aaee6990ead4, type: 3}
+  Step: {fileID: 8300000, guid: 86698c03455e4744f840820aee2acef1, type: 3}
+  Jump: {fileID: 8300000, guid: 843c09da06a482f4eb679f5b559cf011, type: 3}
+  Open: {fileID: 8300000, guid: 8da160cfd6d4f6048bb912392d34971a, type: 3}
+  Gold: {fileID: 8300000, guid: eb21aacf3df4cbd43986e60c8aa0c564, type: 3}
+  Chest: {fileID: 8300000, guid: a4e92b74a825fa342826e9ffad624bb1, type: 3}
+  Lever: {fileID: 8300000, guid: c0583634fddad004aae12ddb9a8760ba, type: 3}
+  Hit: {fileID: 8300000, guid: cbd8a509243b7834d8a25dbe2c235cfa, type: 3}
+  Break: {fileID: 8300000, guid: 8b60ec86794e3ce43840cc2ac3a854d1, type: 3}
+  Win: {fileID: 8300000, guid: 18bf7874c1537a649af23d14d7373e65, type: 3}
+  Lose: {fileID: 8300000, guid: cab2f8cf4b5060940a83c563d4a93443, type: 3}
