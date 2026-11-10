@@ -12,7 +12,7 @@ namespace Game.View
 {
     public sealed class GameScreenPresenter : MonoBehaviour, IAppScreen
     {
-        const float BoardSize = 940f;
+        const float BoardSize = 912f;
         const float Gap = 8f;
         const float NativeCell = 176f;
         static readonly Color Cream = new Color(0.953f, 0.898f, 0.710f);
