@@ -19,6 +19,7 @@ namespace Game.EditorTools
             PlayerSettings.bundleVersion = Version;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, PackageName);
             PlayerSettings.Android.bundleVersionCode = VersionCode;
+            // Unity 6000.5 поддерживает Android с API 26. API 24 редактор отвергает.
             if (PlayerSettings.Android.minSdkVersion != AndroidSdkVersions.AndroidApiLevel26)
                 PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
             PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
