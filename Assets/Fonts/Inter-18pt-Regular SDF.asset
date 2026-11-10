@@ -82,7 +82,7 @@ MonoBehaviour:
     m_StrikethroughThickness: 6.1523438
     m_TabWidth: 25
   m_Material: {fileID: 7158248446164985035}
-  m_SourceFontFileGUID: 5faab90fdfb02ef479e8b8405d434efd
+  m_SourceFontFileGUID: 1f9b68b1e1e985d4c86b177e9b153462
   m_CreationSettings:
     sourceFontFileName: 
     sourceFontFileGUID: 
@@ -102,7 +102,7 @@ MonoBehaviour:
     fontStyleModifier: 0
     renderMode: 0
     includeFontFeatures: 0
-  m_SourceFontFile: {fileID: 12800000, guid: 5faab90fdfb02ef479e8b8405d434efd, type: 3}
+  m_SourceFontFile: {fileID: 12800000, guid: 1f9b68b1e1e985d4c86b177e9b153462, type: 3}
   m_SourceFontFilePath: 
   m_AtlasPopulationMode: 1
   InternalDynamicOS: 0

@@ -14,8 +14,8 @@ namespace Game.EditorTools
     public static class Phase5ASetup
     {
         const string FontDir = "Assets/Fonts";
-        const string CinzelPath = "Assets/TextMesh Pro/Resources/Fonts & Materials/Cinzel/static/Cinzel-Regular.ttf";
-        const string InterPath = "Assets/TextMesh Pro/Resources/Fonts & Materials/Inter/static/Inter_18pt-Regular.ttf";
+        const string CinzelPath = "Assets/TextMesh Pro/Resources/Fonts & Materials/Cinzel/Cinzel-VariableFont_wght.ttf";
+        const string InterPath = "Assets/TextMesh Pro/Resources/Fonts & Materials/Inter/Inter-VariableFont_opsz,wght.ttf";
         const string Characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/,.:•✓- ";
 
         public static void Run()
