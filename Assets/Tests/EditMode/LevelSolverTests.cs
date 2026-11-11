@@ -74,6 +74,8 @@ namespace Game.Tests.EditMode
             var session = Replay(level, result.Path);
             Assert.AreEqual(GameStatus.Won, session.State.Status);
             Assert.AreEqual(result.AlarmAtWin, session.State.Alarm);
+            Assert.IsTrue(session.State.ChestTaken);
+            Assert.AreEqual(session.State.LionA, session.State.LionB);
         }
 
         [Test]
@@ -177,7 +179,7 @@ namespace Game.Tests.EditMode
         }
 
         [Test]
-        public void Shortest_ClosedChest_TakesOneExtraMove()
+        public void Shortest_ClosedAndOpenChest_HaveTheSameLength()
         {
             var options = new SolveOptions { Mode = SolveMode.Shortest, TimeLimitMs = 5000 };
             var closed = LevelSolver.Solve(LevelMapParser.Parse("A.B/.c./.E.", 10, 2, 3, 4), options);
@@ -187,7 +189,8 @@ namespace Game.Tests.EditMode
             Assert.IsTrue(open.Solvable);
             Assert.IsFalse(closed.Truncated);
             Assert.IsFalse(open.Truncated);
-            Assert.AreEqual(open.MinMoves + 1, closed.MinMoves);
+            Assert.AreEqual(open.MinMoves, closed.MinMoves);
+            Assert.AreEqual(open.AlarmAtWin, closed.AlarmAtWin);
         }
 
         [Test]
@@ -237,19 +240,36 @@ namespace Game.Tests.EditMode
         }
 
         [Test]
-        public void MinSolvableThreshold_FirstThreeLevels_MatchPort()
+        public void TrapPocket_IsUnsolvable()
+        {
+            var level = LevelMapParser.Parse("AtB/ttt/.ce", 8, 2, 3, 4);
+            var solved = LevelSolver.Solve(level, new SolveOptions { Mode = SolveMode.FindAny });
+            Assert.IsFalse(solved.Solvable);
+            Assert.IsFalse(solved.Truncated);
+
+            var threshold = LevelSolver.MinSolvableThreshold(level, 8, new SolveOptions());
+            Assert.AreEqual(-1, threshold.Value);
+            Assert.IsFalse(threshold.Truncated);
+        }
+
+        [Test]
+        public void MinSolvableThreshold_AuthoredLevels_MatchTheTable()
         {
             var set = UnityEditor.AssetDatabase.LoadAssetAtPath<Game.Config.LevelSet>("Assets/ScriptableObjects/LevelSet.asset");
             Assert.IsNotNull(set);
-            var expected = new[] { 1, 4, 1 };
-            for (var number = 1; number <= 3; number++)
+            var expected = new[] { 1, 4, 1, 1, 4, 7, 7, 7, 9, 13 };
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            for (var number = 1; number <= set.Count; number++)
             {
                 var level = set.Get(number).ToLevelData();
                 var result = LevelSolver.MinSolvableThreshold(level, level.AlarmThreshold, new SolveOptions());
+                TestContext.WriteLine("minT уровень " + number + " значение=" + result.Value + " мс=" + watch.ElapsedMilliseconds);
                 Assert.AreEqual(expected[number - 1], result.Value, "Уровень " + number);
                 Assert.IsTrue(result.Exact, "Уровень " + number);
                 Assert.IsFalse(result.Truncated, "Уровень " + number);
             }
+
+            Assert.LessOrEqual(watch.ElapsedMilliseconds, 60000, "Пороги десяти уровней дольше 60 секунд");
         }
 
         [Test]

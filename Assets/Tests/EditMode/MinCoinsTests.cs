@@ -20,28 +20,29 @@ namespace Game.Tests.EditMode
         {
             var session = new GameSession(LevelMapParser.Parse("A.B/.C./.E.", 10, 2, 3, 4, 1));
             session.TapCell(new CellPos(0, 1));
-            session.SelectLion(LionId.B);
-            session.TapCell(new CellPos(2, 1));
-            session.SelectLion(LionId.A);
             session.TapCell(new CellPos(1, 1));
             session.SelectLion(LionId.B);
-            session.TapCell(new CellPos(2, 2));
+            session.TapCell(new CellPos(2, 1));
+            session.TapCell(new CellPos(1, 1));
+            session.SelectLion(LionId.A);
+            session.TapCell(new CellPos(1, 2));
+            session.SelectLion(LionId.B);
+            session.TapCell(new CellPos(1, 2));
 
             Assert.IsFalse(session.ExitReady);
-            var attempt = session.TapCell(new CellPos(1, 2));
-            Assert.IsTrue(attempt.Accepted);
-            Assert.IsInstanceOf<ExitAttempted>(attempt.Events[attempt.Events.Count - 1]);
-            Assert.IsFalse(((ExitAttempted)attempt.Events[attempt.Events.Count - 1]).ConditionsMet);
+            Assert.IsTrue(session.State.LionA == new CellPos(1, 2) && session.State.LionB == new CellPos(1, 2));
             Assert.IsFalse(session.TryExtract().Accepted);
 
             var ready = new GameSession(LevelMapParser.Parse("A.B/gC./.E.", 10, 2, 3, 4, 1));
             ready.TapCell(new CellPos(0, 1));
-            ready.SelectLion(LionId.B);
-            ready.TapCell(new CellPos(2, 1));
-            ready.SelectLion(LionId.A);
             ready.TapCell(new CellPos(1, 1));
             ready.SelectLion(LionId.B);
-            ready.TapCell(new CellPos(2, 2));
+            ready.TapCell(new CellPos(2, 1));
+            ready.TapCell(new CellPos(1, 1));
+            ready.SelectLion(LionId.A);
+            ready.TapCell(new CellPos(1, 2));
+            ready.SelectLion(LionId.B);
+            ready.TapCell(new CellPos(1, 2));
 
             Assert.AreEqual(1, ready.CollectedCoins);
             Assert.IsTrue(ready.ExitReady);

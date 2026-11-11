@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Level_09
   m_EditorClassIdentifier: Game.Config::Game.Config.LevelConfig
   Number: 9
-  Map: Ae##gB/#ttg##/trrtrr/#g#t#g/rtttrr/l#gtc#
-  AlarmThreshold: 13
+  Map: '#A#rBg/tget##/rrrrtr/rrrrrr/###ttl/c##tgg'
+  AlarmThreshold: 14
   JumpCost: 2
   GateBreakCost: 3
   TrapCost: 4
-  MinCoins: 4
+  MinCoins: 3

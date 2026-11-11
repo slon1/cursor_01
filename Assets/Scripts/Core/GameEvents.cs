@@ -4,8 +4,6 @@ namespace Game.Core
 
     public sealed record LionMoved(LionId Lion, CellPos From, CellPos To, bool IsJump) : GameEvent;
 
-    public sealed record LionsSwapped(CellPos PosA, CellPos PosB, LionId Initiator, bool IsJump) : GameEvent;
-
     public sealed record CellOpened(CellPos Pos, ItemType Item) : GameEvent;
 
     public sealed record TrapTriggered(CellPos Pos, LionId Lion) : GameEvent;
@@ -21,8 +19,6 @@ namespace Game.Core
     public sealed record AlarmChanged(int OldValue, int NewValue) : GameEvent;
 
     public sealed record ChestTaken(CellPos Pos, LionId Lion) : GameEvent;
-
-    public sealed record ExitAttempted(bool ConditionsMet) : GameEvent;
 
     public sealed record GameWon : GameEvent;
 

@@ -17,14 +17,7 @@ namespace Game.Core
             if (!TryGetKind(lion, origin, target, out var kind, out var shapeReason))
                 return Reject(shapeReason);
 
-            var other = state.Position(Other(lion));
-            if (other == target)
-                return ResolveSwap(state, lion, origin, target, kind);
-
             var cell = state.CellAt(target);
-            if (cell.Item == ItemType.Chest && cell.IsOpen && !Adjacent(other, target))
-                return Reject(RejectReason.TargetIsChest);
-
             if (cell.Item == ItemType.Gate && lion == LionId.A && cell.IsOpen)
                 return Reject(RejectReason.GateBlocksLionA);
 
@@ -59,24 +52,7 @@ namespace Game.Core
             if (!state.ChestTaken || !TryFind(state, ItemType.Exit, out var exit))
                 return false;
 
-            if (!state.CellAt(exit).IsOpen)
-                return false;
-
-            return Adjacent(state.LionA, exit) && Adjacent(state.LionB, exit) && state.Gold >= state.MinCoins;
-        }
-
-        static MoveResult ResolveSwap(GameState state, LionId lion, CellPos origin, CellPos target, MoveKind kind)
-        {
-            var events = new List<GameEvent>();
-            var alarmBefore = state.Alarm;
-            state.SetPosition(lion, target);
-            state.SetPosition(Other(lion), origin);
-            events.Add(new LionsSwapped(state.LionA, state.LionB, lion, kind == MoveKind.Jump));
-            if (kind == MoveKind.Jump)
-                state.Alarm += state.JumpCost;
-
-            Finish(state, alarmBefore, events);
-            return Accept(events);
+            return state.LionA == exit && state.LionB == exit && state.Gold >= state.MinCoins;
         }
 
         static MoveResult ResolveLanding(GameState state, LionId lion, CellPos origin, CellPos target, MoveKind kind)
@@ -109,17 +85,6 @@ namespace Game.Core
                     events.Add(new GateBroken(target));
                     alarmCost += state.GateBreakCost;
                     break;
-                case ItemType.Chest:
-                    if (startedClosed)
-                        break;
-
-                    state.SetPosition(lion, target);
-                    cell.Item = ItemType.None;
-                    state.ChestTaken = true;
-                    events.Add(new LionMoved(lion, origin, target, kind == MoveKind.Jump));
-                    events.Add(new ChestTaken(target, lion));
-                    landed = true;
-                    break;
                 case ItemType.Gold:
                     state.SetPosition(lion, target);
                     state.Gold += 1;
@@ -136,14 +101,24 @@ namespace Game.Core
                     landed = true;
                     resetAlarm = true;
                     break;
+                case ItemType.Chest:
                 case ItemType.Exit:
-                    events.Add(new ExitAttempted(ExitConditionsMet(state)));
-                    break;
                 case ItemType.None:
                     state.SetPosition(lion, target);
                     events.Add(new LionMoved(lion, origin, target, kind == MoveKind.Jump));
                     landed = true;
                     break;
+            }
+
+            if (landed
+                && !state.ChestTaken
+                && TryFind(state, ItemType.Chest, out var chest)
+                && state.LionA == chest
+                && state.LionB == chest)
+            {
+                state.CellAt(chest).Item = ItemType.None;
+                state.ChestTaken = true;
+                events.Add(new ChestTaken(chest, lion));
             }
 
             if (landed && kind == MoveKind.Jump)
@@ -185,20 +160,8 @@ namespace Game.Core
 
         static bool IsListed(GameState state, LionId lion, CellPos pos)
         {
-            if (pos == state.Position(Other(lion)))
-                return true;
-
             var cell = state.CellAt(pos);
-            if (!cell.IsOpen)
-                return true;
-
-            if (cell.Item == ItemType.Chest)
-                return Adjacent(state.Position(Other(lion)), pos);
-
-            if (lion == LionId.A && cell.Item == ItemType.Gate)
-                return false;
-
-            return true;
+            return !(cell.IsOpen && lion == LionId.A && cell.Item == ItemType.Gate);
         }
 
         static bool TryGetKind(LionId lion, CellPos from, CellPos to, out MoveKind kind, out RejectReason reason)
@@ -242,15 +205,6 @@ namespace Game.Core
             pos = default;
             return false;
         }
-
-        static bool Adjacent(CellPos a, CellPos b)
-        {
-            var dx = Math.Abs(a.X - b.X);
-            var dy = Math.Abs(a.Y - b.Y);
-            return dx + dy == 1;
-        }
-
-        static LionId Other(LionId lion) => lion == LionId.A ? LionId.B : LionId.A;
 
         static MoveResult Accept(List<GameEvent> events) =>
             new MoveResult(true, RejectReason.None, events);

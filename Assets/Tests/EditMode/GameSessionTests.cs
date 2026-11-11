@@ -61,12 +61,14 @@ namespace Game.Tests.EditMode
             Assert.IsFalse(session.TryExtract().Accepted);
 
             session.TapCell(new CellPos(0, 1));
-            session.SelectLion(LionId.B);
-            session.TapCell(new CellPos(2, 1));
-            session.SelectLion(LionId.A);
             session.TapCell(new CellPos(1, 1));
             session.SelectLion(LionId.B);
-            session.TapCell(new CellPos(2, 2));
+            session.TapCell(new CellPos(2, 1));
+            session.TapCell(new CellPos(1, 1));
+            session.SelectLion(LionId.A);
+            session.TapCell(new CellPos(1, 2));
+            session.SelectLion(LionId.B);
+            session.TapCell(new CellPos(1, 2));
 
             Assert.IsTrue(session.ExitReady);
             var extract = session.TryExtract();

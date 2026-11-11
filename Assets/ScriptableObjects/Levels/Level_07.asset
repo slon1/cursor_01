@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Level_07
   m_EditorClassIdentifier: Game.Config::Game.Config.LevelConfig
   Number: 7
-  Map: A##t#B/#g##g#/rrrrrr/t#g#t#/rr#rrr/#c#ge#
+  Map: AgB##g/#####t/rrrttt/rrrrrr/##tt#g/#e#g#c
   AlarmThreshold: 12
   JumpCost: 2
   GateBreakCost: 3

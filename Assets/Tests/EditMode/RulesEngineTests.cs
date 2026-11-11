@@ -8,7 +8,7 @@ namespace Game.Tests.EditMode
     {
         [TestCase(LionId.A)]
         [TestCase(LionId.B)]
-        public void Step_OntoOtherLion_Swaps(LionId lion)
+        public void Step_OntoOtherLion_SharesTheCell(LionId lion)
         {
             var state = lion == LionId.A
                 ? LevelBuilder.Play("..../....", 0, 0, 1, 0)
@@ -16,13 +16,11 @@ namespace Game.Tests.EditMode
             var result = Move(state, lion, 1, 0);
 
             Assert.IsTrue(result.Accepted);
-            Assert.AreEqual(new CellPos(1, 0), state.Position(lion));
-            Assert.AreEqual(new CellPos(0, 0), state.Position(Other(lion)));
-            var swap = (LionsSwapped)result.Events.Single();
-            Assert.AreEqual(state.LionA, swap.PosA);
-            Assert.AreEqual(state.LionB, swap.PosB);
-            Assert.AreEqual(lion, swap.Initiator);
-            Assert.IsFalse(swap.IsJump);
+            Assert.AreEqual(new CellPos(1, 0), state.LionA);
+            Assert.AreEqual(new CellPos(1, 0), state.LionB);
+            var moved = (LionMoved)result.Events.Single();
+            Assert.AreEqual(lion, moved.Lion);
+            Assert.IsFalse(moved.IsJump);
             Assert.AreEqual(0, state.Alarm);
         }
 
@@ -121,18 +119,17 @@ namespace Game.Tests.EditMode
 
         [TestCase(LionId.A)]
         [TestCase(LionId.B)]
-        public void Step_OntoOpenChest_RejectsWithoutChanges(LionId lion)
+        public void Step_OntoOpenChest_EntersAndLeavesTheChest(LionId lion)
         {
             var state = ActorAtOrigin(lion, ".C../....");
             var result = Move(state, lion, 1, 0);
 
-            Assert.IsFalse(result.Accepted);
-            Assert.AreEqual(RejectReason.TargetIsChest, result.Reason);
-            Assert.AreEqual(0, result.Events.Count);
-            Assert.AreEqual(new CellPos(0, 0), state.Position(lion));
-            Assert.IsTrue(state.CellAt(new CellPos(1, 0)).IsOpen);
+            Assert.IsTrue(result.Accepted);
+            Assert.AreEqual(new CellPos(1, 0), state.Position(lion));
+            Assert.IsFalse(state.ChestTaken);
             Assert.AreEqual(ItemType.Chest, state.CellAt(new CellPos(1, 0)).Item);
             Assert.AreEqual(0, state.Alarm);
+            Assert.IsInstanceOf<LionMoved>(result.Events.Single());
         }
 
         [TestCase(LionId.A)]
@@ -144,25 +141,27 @@ namespace Game.Tests.EditMode
 
             Assert.IsTrue(result.Accepted);
             Assert.AreEqual(RejectReason.None, result.Reason);
-            Assert.AreEqual(new CellPos(0, 0), state.Position(lion));
+            Assert.AreEqual(new CellPos(1, 0), state.Position(lion));
             Assert.AreEqual(0, state.Alarm);
+            Assert.IsFalse(state.ChestTaken);
             Assert.IsTrue(state.CellAt(new CellPos(1, 0)).IsOpen);
             Assert.AreEqual(ItemType.Chest, state.CellAt(new CellPos(1, 0)).Item);
-            Assert.AreEqual(new CellPos(1, 0), ((CellOpened)result.Events.Single()).Pos);
+            Assert.IsInstanceOf<CellOpened>(result.Events[0]);
+            Assert.IsInstanceOf<LionMoved>(result.Events[1]);
         }
 
         [TestCase(LionId.A)]
         [TestCase(LionId.B)]
-        public void Step_OntoExit_DoesNotEnter(LionId lion)
+        public void Step_OntoExit_Enters(LionId lion)
         {
             var state = ActorAtOrigin(lion, ".E../....");
             var result = Move(state, lion, 1, 0);
 
             Assert.IsTrue(result.Accepted);
-            Assert.AreEqual(new CellPos(0, 0), state.Position(lion));
+            Assert.AreEqual(new CellPos(1, 0), state.Position(lion));
             Assert.AreEqual(ItemType.Exit, state.CellAt(new CellPos(1, 0)).Item);
-            var attempt = (ExitAttempted)result.Events.Single();
-            Assert.IsFalse(attempt.ConditionsMet);
+            Assert.IsFalse(RulesEngine.ExitConditionsMet(state));
+            Assert.IsInstanceOf<LionMoved>(result.Events.Single());
         }
 
         [TestCase(LionId.A, "t")]
@@ -184,15 +183,16 @@ namespace Game.Tests.EditMode
             var state = ActorAtOrigin(lion, "." + contents + "../....");
             var result = Move(state, lion, 1, 0);
             var cell = state.CellAt(new CellPos(1, 0));
-            if (contents == "c")
+            if (contents == "c" || contents == "e")
             {
                 Assert.IsTrue(result.Accepted);
-                Assert.AreEqual(RejectReason.None, result.Reason);
                 Assert.IsTrue(cell.IsOpen);
-                Assert.AreEqual(ItemType.Chest, cell.Item);
-                Assert.AreEqual(new CellPos(0, 0), state.Position(lion));
+                Assert.AreEqual(new CellPos(1, 0), state.Position(lion));
                 Assert.AreEqual(0, state.Alarm);
-                Assert.IsInstanceOf<CellOpened>(result.Events.Single());
+                Assert.IsInstanceOf<CellOpened>(result.Events[0]);
+                Assert.IsInstanceOf<LionMoved>(result.Events[1]);
+                Assert.AreEqual(contents == "c" ? ItemType.Chest : ItemType.Exit, cell.Item);
+                Assert.IsFalse(state.ChestTaken);
                 return;
             }
 
@@ -232,11 +232,6 @@ namespace Game.Tests.EditMode
                     Assert.AreEqual(new CellPos(1, 0), state.Position(lion));
                     Assert.AreEqual(1, state.Gold);
                     break;
-                case "e":
-                    Assert.AreEqual(new CellPos(0, 0), state.Position(lion));
-                    Assert.AreEqual(ItemType.Exit, cell.Item);
-                    Assert.IsInstanceOf<ExitAttempted>(result.Events[1]);
-                    break;
             }
         }
 
@@ -245,7 +240,7 @@ namespace Game.Tests.EditMode
         [TestCase("r", typeof(GateBlocked))]
         [TestCase("l", typeof(LeverUsed))]
         [TestCase("g", typeof(GoldCollected))]
-        [TestCase("e", typeof(ExitAttempted))]
+        [TestCase("e", typeof(LionMoved))]
         public void Jump_OntoClosedCell(string contents, System.Type interaction)
         {
             var state = LevelBuilder.Play(".#" + contents + "./....", 0, 0, 3, 1);
@@ -269,24 +264,25 @@ namespace Game.Tests.EditMode
             if (contents == "r")
                 Assert.AreEqual(0, state.Alarm);
             Assert.AreEqual(
-                contents == "t" || contents == "r" || contents == "e" ? new CellPos(0, 0) : new CellPos(2, 0),
+                contents == "t" || contents == "r" ? new CellPos(0, 0) : new CellPos(2, 0),
                 state.LionA);
         }
 
         [Test]
-        public void Jump_OntoClosedChest_OpensWithoutCost()
+        public void Jump_OntoClosedChest_LandsAndPays()
         {
             var state = LevelBuilder.Play("..c./....", 0, 0, 3, 1, jumpCost: 9);
             var result = Move(state, LionId.A, 2, 0);
 
             Assert.IsTrue(result.Accepted);
-            Assert.AreEqual(RejectReason.None, result.Reason);
-            Assert.IsTrue(state.CellAt(new CellPos(2, 0)).IsOpen);
-            Assert.AreEqual(ItemType.Chest, state.CellAt(new CellPos(2, 0)).Item);
-            Assert.AreEqual(new CellPos(0, 0), state.LionA);
-            Assert.AreEqual(0, state.Alarm);
+            Assert.AreEqual(new CellPos(2, 0), state.LionA);
+            Assert.AreEqual(9, state.Alarm);
             Assert.IsFalse(state.ChestTaken);
-            Assert.AreEqual(new CellPos(2, 0), ((CellOpened)result.Events.Single()).Pos);
+            Assert.AreEqual(ItemType.Chest, state.CellAt(new CellPos(2, 0)).Item);
+            Assert.IsInstanceOf<CellOpened>(result.Events[0]);
+            var moved = (LionMoved)result.Events[1];
+            Assert.IsTrue(moved.IsJump);
+            Assert.IsInstanceOf<AlarmChanged>(result.Events[2]);
         }
 
         [Test]
@@ -332,21 +328,19 @@ namespace Game.Tests.EditMode
         }
 
         [Test]
-        public void Jump_OntoLionB_SwapsAndPaysJump()
+        public void Jump_OntoLionB_SharesTheCellAndPaysJump()
         {
             var state = LevelBuilder.Play(".T../....", 0, 0, 2, 0);
             var result = Move(state, LionId.A, 2, 0);
 
             Assert.IsTrue(result.Accepted);
             Assert.AreEqual(new CellPos(2, 0), state.LionA);
-            Assert.AreEqual(new CellPos(0, 0), state.LionB);
+            Assert.AreEqual(new CellPos(2, 0), state.LionB);
             Assert.AreEqual(ItemType.Trap, state.CellAt(new CellPos(1, 0)).Item);
             Assert.AreEqual(2, state.Alarm);
-            var swap = (LionsSwapped)result.Events[0];
-            Assert.AreEqual(new CellPos(2, 0), swap.PosA);
-            Assert.AreEqual(new CellPos(0, 0), swap.PosB);
-            Assert.AreEqual(LionId.A, swap.Initiator);
-            Assert.IsTrue(swap.IsJump);
+            var moved = (LionMoved)result.Events[0];
+            Assert.AreEqual(LionId.A, moved.Lion);
+            Assert.IsTrue(moved.IsJump);
         }
 
         [Test]
@@ -439,24 +433,21 @@ namespace Game.Tests.EditMode
 
         [TestCase(LionId.A)]
         [TestCase(LionId.B)]
-        public void Step_OntoOpenChest_TakesWhenPartnerIsAdjacent(LionId lion)
+        public void Step_OntoOpenChest_TakesWhenPartnerIsThere(LionId lion)
         {
             var state = lion == LionId.A
-                ? LevelBuilder.Play(".C../....", 0, 0, 1, 1)
-                : LevelBuilder.Play(".C../....", 1, 1, 0, 0);
+                ? LevelBuilder.Play(".C../....", 0, 0, 1, 0)
+                : LevelBuilder.Play(".C../....", 1, 0, 0, 0);
             var result = Move(state, lion, 1, 0);
 
             Assert.IsTrue(result.Accepted);
             Assert.IsTrue(state.ChestTaken);
-            Assert.AreEqual(new CellPos(1, 0), state.Position(lion));
+            Assert.AreEqual(new CellPos(1, 0), state.LionA);
+            Assert.AreEqual(new CellPos(1, 0), state.LionB);
             Assert.AreEqual(ItemType.None, state.CellAt(new CellPos(1, 0)).Item);
             Assert.AreEqual(0, state.Alarm);
             Assert.IsInstanceOf<LionMoved>(result.Events[0]);
             Assert.IsInstanceOf<ChestTaken>(result.Events[1]);
-            Assert.AreEqual(2, result.Events.Count);
-            var moved = (LionMoved)result.Events[0];
-            Assert.AreEqual(lion, moved.Lion);
-            Assert.IsFalse(moved.IsJump);
             var taken = (ChestTaken)result.Events[1];
             Assert.AreEqual(new CellPos(1, 0), taken.Pos);
             Assert.AreEqual(lion, taken.Lion);
@@ -465,7 +456,7 @@ namespace Game.Tests.EditMode
         [Test]
         public void Jump_OntoOpenChest_PaysJump_AndTakes()
         {
-            var state = LevelBuilder.Play("..C./....", 0, 0, 2, 1, jumpCost: 2);
+            var state = LevelBuilder.Play("..C./....", 0, 0, 2, 0, jumpCost: 2);
             var result = Move(state, LionId.A, 2, 0);
 
             Assert.IsTrue(result.Accepted);
@@ -483,36 +474,42 @@ namespace Game.Tests.EditMode
         }
 
         [Test]
-        public void Step_OntoOpenChest_DiagonalPartner_Rejects()
+        public void Step_OntoOpenChest_WithoutPartner_LeavesTheChest()
         {
             var state = LevelBuilder.Play(".C../....", 0, 0, 2, 1);
-            var before = state.Clone();
             var result = Move(state, LionId.A, 1, 0);
 
-            Assert.AreEqual(RejectReason.TargetIsChest, result.Reason);
-            Assert.AreEqual(0, result.Events.Count);
+            Assert.IsTrue(result.Accepted);
             Assert.IsFalse(state.ChestTaken);
-            Assert.AreEqual(before.LionA, state.LionA);
-            Assert.AreEqual(before.LionB, state.LionB);
+            Assert.AreEqual(new CellPos(1, 0), state.LionA);
+            Assert.AreEqual(new CellPos(2, 1), state.LionB);
             Assert.AreEqual(ItemType.Chest, state.CellAt(new CellPos(1, 0)).Item);
             Assert.AreEqual(0, state.Alarm);
+            Assert.IsFalse(result.Events.OfType<ChestTaken>().Any());
         }
 
         [Test]
-        public void ClosedChest_OpensFirst_ThenNextMoveTakesIt()
+        public void ClosedChest_OpensAndEnters_ThenPartnerTakesIt()
         {
             var state = LevelBuilder.Play(".c../....", 0, 0, 1, 1);
             var opened = Move(state, LionId.A, 1, 0);
 
             Assert.IsTrue(opened.Accepted);
             Assert.IsFalse(state.ChestTaken);
-            Assert.AreEqual(new CellPos(0, 0), state.LionA);
+            Assert.AreEqual(new CellPos(1, 0), state.LionA);
             Assert.AreEqual(ItemType.Chest, state.CellAt(new CellPos(1, 0)).Item);
-            Assert.IsInstanceOf<CellOpened>(opened.Events.Single());
+            Assert.IsInstanceOf<CellOpened>(opened.Events[0]);
+            Assert.IsInstanceOf<LionMoved>(opened.Events[1]);
 
-            var taken = Move(state, LionId.A, 1, 0);
+            var left = Move(state, LionId.A, 0, 0);
+            Assert.IsFalse(state.ChestTaken);
+            Assert.AreEqual(new CellPos(0, 0), state.LionA);
+
+            Move(state, LionId.A, 1, 0);
+            var taken = Move(state, LionId.B, 1, 0);
             Assert.IsTrue(state.ChestTaken);
             Assert.AreEqual(new CellPos(1, 0), state.LionA);
+            Assert.AreEqual(new CellPos(1, 0), state.LionB);
             Assert.AreEqual(ItemType.None, state.CellAt(new CellPos(1, 0)).Item);
             Assert.IsInstanceOf<LionMoved>(taken.Events[0]);
             Assert.IsInstanceOf<ChestTaken>(taken.Events[1]);
@@ -531,93 +528,93 @@ namespace Game.Tests.EditMode
         }
 
         [Test]
-        public void GetTargets_OpenChest_OnlyWhenPartnerIsAdjacent()
+        public void GetTargets_IncludesPartnerChestAndExit_ButNotOpenGateForLionA()
         {
-            var apart = LevelBuilder.Play(".C../c...", 0, 0, 3, 1);
-            Assert.IsFalse(RulesEngine.GetTargets(apart, LionId.A).Any(t => t.Pos == new CellPos(1, 0)));
-            Assert.IsTrue(RulesEngine.GetTargets(apart, LionId.A).Any(t => t.Pos == new CellPos(0, 1) && t.Kind == MoveKind.Step));
+            var state = LevelBuilder.Play(".CE./..../R...", 0, 0, 0, 1);
+            var targets = RulesEngine.GetTargets(state, LionId.A);
 
-            var ready = LevelBuilder.Play(".C../....", 0, 0, 1, 1);
-            Assert.IsTrue(RulesEngine.GetTargets(ready, LionId.A).Any(t => t.Pos == new CellPos(1, 0) && t.Kind == MoveKind.Step));
-
-            var jump = LevelBuilder.Play("..C./....", 0, 0, 2, 1);
-            Assert.IsTrue(RulesEngine.GetTargets(jump, LionId.A).Any(t => t.Pos == new CellPos(2, 0) && t.Kind == MoveKind.Jump));
+            Assert.IsTrue(targets.Any(t => t.Pos == new CellPos(0, 1) && t.Kind == MoveKind.Step));
+            Assert.IsTrue(targets.Any(t => t.Pos == new CellPos(1, 0) && t.Kind == MoveKind.Step));
+            Assert.IsTrue(targets.Any(t => t.Pos == new CellPos(2, 0) && t.Kind == MoveKind.Jump));
+            Assert.IsFalse(targets.Any(t => t.Pos == new CellPos(0, 2)));
         }
 
         [Test]
-        public void Exit_StaysShut_UntilTheChestIsTaken()
+        public void Exit_NeedsBothLionsOnTheCell_AfterTheChest()
         {
-            var state = LevelBuilder.Play("..E./.C..", 1, 0, 2, 1);
-            Assert.IsTrue(state.CellAt(new CellPos(2, 0)).IsOpen);
+            var state = GameState.FromLevel(LevelMapParser.Parse("ACBE", 20, 2, 3, 4));
+            Move(state, LionId.B, 3, 0);
+            Move(state, LionId.A, 1, 0);
+            Move(state, LionId.A, 3, 0);
             Assert.IsFalse(state.ChestTaken);
             Assert.IsFalse(RulesEngine.ExitConditionsMet(state));
-
-            Move(state, LionId.A, 1, 1);
-            Assert.IsTrue(state.ChestTaken);
-            Assert.IsFalse(RulesEngine.ExitConditionsMet(state));
+            Assert.IsFalse(RulesEngine.ConfirmExtract(state).Accepted);
 
             Move(state, LionId.A, 1, 0);
-            Assert.IsTrue(RulesEngine.ExitConditionsMet(state));
-        }
-
-        [Test]
-        public void ConfirmExtract_ClosedExit_ChangesNothing()
-        {
-            var state = LevelBuilder.Play("..../.C.e/....", 1, 0, 0, 2);
-            Move(state, LionId.B, 0, 1);
-            Move(state, LionId.A, 1, 1);
-            Move(state, LionId.A, 2, 1);
-            Move(state, LionId.A, 2, 0);
-            Move(state, LionId.A, 3, 0);
-            Move(state, LionId.B, 0, 2);
-            Move(state, LionId.B, 1, 2);
-            Move(state, LionId.B, 2, 2);
-            Move(state, LionId.B, 3, 2);
-
-            Assert.IsTrue(state.ChestTaken);
-            Assert.IsFalse(state.CellAt(new CellPos(3, 1)).IsOpen);
-            Assert.IsFalse(RulesEngine.ExitConditionsMet(state));
-            var extract = RulesEngine.ConfirmExtract(state);
-            Assert.IsFalse(extract.Accepted);
-            Assert.AreEqual(0, extract.Events.Count);
-            Assert.AreEqual(GameStatus.Playing, state.Status);
-            Assert.IsFalse(state.CellAt(new CellPos(3, 1)).IsOpen);
-        }
-
-        [Test]
-        public void Exit_ConfirmExtract_OnlyWhenConditionsMet()
-        {
-            var state = LevelBuilder.Play("..../.C.E/....", 1, 0, 0, 2);
-            Assert.IsFalse(RulesEngine.ExitConditionsMet(state));
-            Assert.IsFalse(RulesEngine.ConfirmExtract(state).Accepted);
-
-            Move(state, LionId.B, 0, 1);
-            Assert.IsFalse(state.ChestTaken);
-            Move(state, LionId.A, 1, 1);
+            Move(state, LionId.B, 2, 0);
+            Move(state, LionId.B, 1, 0);
             Assert.IsTrue(state.ChestTaken);
             Assert.IsFalse(RulesEngine.ExitConditionsMet(state));
 
-            Move(state, LionId.A, 2, 1);
-            Move(state, LionId.A, 2, 0);
             Move(state, LionId.A, 3, 0);
-            Move(state, LionId.B, 0, 2);
-            Move(state, LionId.B, 1, 2);
-            Move(state, LionId.B, 2, 2);
-            Move(state, LionId.B, 3, 2);
+            Move(state, LionId.B, 2, 0);
+            Move(state, LionId.B, 3, 0);
             Assert.IsTrue(RulesEngine.ExitConditionsMet(state));
-
-            var attempt = Move(state, LionId.A, 3, 1);
-            Assert.IsTrue(((ExitAttempted)attempt.Events.Single()).ConditionsMet);
-            Assert.AreEqual(GameStatus.Playing, state.Status);
-
             var extract = RulesEngine.ConfirmExtract(state);
             Assert.IsTrue(extract.Accepted);
-            Assert.IsInstanceOf<GameWon>(extract.Events.Single());
             Assert.AreEqual(GameStatus.Won, state.Status);
+        }
 
-            var after = Move(state, LionId.A, 2, 0);
-            Assert.AreEqual(RejectReason.GameOver, after.Reason);
-            Assert.IsFalse(RulesEngine.ConfirmExtract(state).Accepted);
+        [Test]
+        public void Exit_ShortGold_AndLeaving_CloseItAgain()
+        {
+            var poor = GameState.FromLevel(LevelMapParser.Parse("ACBE", 20, 2, 3, 4, 1));
+            Move(poor, LionId.A, 1, 0);
+            Move(poor, LionId.B, 1, 0);
+            Move(poor, LionId.A, 3, 0);
+            Move(poor, LionId.B, 2, 0);
+            Move(poor, LionId.B, 3, 0);
+
+            Assert.IsTrue(poor.ChestTaken);
+            Assert.IsFalse(RulesEngine.ExitConditionsMet(poor));
+            Assert.IsFalse(RulesEngine.ConfirmExtract(poor).Accepted);
+            Assert.AreEqual(GameStatus.Playing, poor.Status);
+
+            var ready = GameState.FromLevel(LevelMapParser.Parse("ACBE", 20, 2, 3, 4));
+            Move(ready, LionId.A, 1, 0);
+            Move(ready, LionId.B, 1, 0);
+            Move(ready, LionId.A, 3, 0);
+            Move(ready, LionId.B, 2, 0);
+            Move(ready, LionId.B, 3, 0);
+            Assert.IsTrue(RulesEngine.ExitConditionsMet(ready));
+
+            Move(ready, LionId.A, 2, 0);
+            Assert.IsFalse(RulesEngine.ExitConditionsMet(ready));
+            Assert.IsFalse(RulesEngine.ConfirmExtract(ready).Accepted);
+
+            Move(ready, LionId.A, 3, 0);
+            var extract = RulesEngine.ConfirmExtract(ready);
+            Assert.IsTrue(extract.Accepted);
+            Assert.IsInstanceOf<GameWon>(extract.Events.Single());
+            Assert.AreEqual(GameStatus.Won, ready.Status);
+        }
+
+        [Test]
+        public void SharedGold_FirstLionTakesIt()
+        {
+            var state = LevelBuilder.Play(".G../....", 0, 0, 2, 0);
+            var first = Move(state, LionId.A, 1, 0);
+
+            Assert.AreEqual(1, state.Gold);
+            Assert.IsInstanceOf<LionMoved>(first.Events[0]);
+            Assert.IsInstanceOf<GoldCollected>(first.Events[1]);
+
+            var second = Move(state, LionId.B, 1, 0);
+            Assert.AreEqual(new CellPos(1, 0), state.LionA);
+            Assert.AreEqual(new CellPos(1, 0), state.LionB);
+            Assert.AreEqual(1, state.Gold);
+            Assert.AreEqual(ItemType.None, state.CellAt(new CellPos(1, 0)).Item);
+            Assert.IsInstanceOf<LionMoved>(second.Events.Single());
         }
 
         [Test]
@@ -638,7 +635,7 @@ namespace Game.Tests.EditMode
             var state = LevelBuilder.Play("..C../..R../r..TE/..c../.....", 2, 2, 2, 4);
             var targets = RulesEngine.GetTargets(state, LionId.A);
 
-            Assert.IsFalse(targets.Any(t => t.Pos == new CellPos(2, 0)));
+            Assert.IsTrue(targets.Any(t => t.Pos == new CellPos(2, 0)));
             Assert.IsFalse(targets.Any(t => t.Pos == new CellPos(2, 1)));
             Assert.IsTrue(targets.Any(t => t.Pos == new CellPos(2, 3) && t.Kind == MoveKind.Step));
             Assert.IsTrue(targets.Any(t => t.Pos == new CellPos(0, 2) && t.Kind == MoveKind.Jump));

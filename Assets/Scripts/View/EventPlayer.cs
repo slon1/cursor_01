@@ -38,10 +38,6 @@ namespace Game.View
                     Cue(moved.IsJump ? SfxId.Jump : SfxId.Step);
                     await MoveToken(stage.Token(moved.Lion), stage.CellCenter(moved.To), moved.IsJump, stage, cancellation);
                     break;
-                case LionsSwapped swapped:
-                    Cue(swapped.IsJump ? SfxId.Jump : SfxId.Step);
-                    await Swap(swapped, stage, cancellation);
-                    break;
                 case CellOpened opened:
                     Cue(SfxId.Open);
                     await OpenCell(stage.Cell(opened.Pos), opened.Item, stage, cancellation);
@@ -78,11 +74,6 @@ namespace Game.View
                     await WaitToConsume(cancellation);
                     await TakeChest(stage.Cell(taken.Pos), cancellation);
                     break;
-                case ExitAttempted attempted:
-                    if (!attempted.ConditionsMet)
-                        Cue(SfxId.Hit);
-                    await Pulse(stage.Extract, cancellation);
-                    break;
                 case GameWon:
                     Cue(SfxId.Win);
                     break;
@@ -112,13 +103,6 @@ namespace Game.View
                 token.localScale = scale * bump;
             }, 1f, _settings.MoveDuration).SetEase(Ease.Linear).Await(cancellation);
             token.localScale = scale;
-        }
-
-        async UniTask Swap(LionsSwapped swapped, PlayStage stage, CancellationToken cancellation)
-        {
-            var first = MoveToken(stage.Token(LionId.A), stage.CellCenter(swapped.PosA), swapped.Initiator == LionId.A && swapped.IsJump, stage, cancellation);
-            var second = MoveToken(stage.Token(LionId.B), stage.CellCenter(swapped.PosB), swapped.Initiator == LionId.B && swapped.IsJump, stage, cancellation);
-            await UniTask.WhenAll(first, second);
         }
 
         async UniTask OpenCell(CellView cell, ItemType item, PlayStage stage, CancellationToken cancellation)
@@ -205,16 +189,6 @@ namespace Game.View
                 rect.DOScale(1.3f, _settings.FadeDuration).Await(cancellation));
             item.enabled = false;
             rect.localScale = Vector3.one;
-        }
-
-        async UniTask Pulse(Transform target, CancellationToken cancellation)
-        {
-            if (target == null)
-                return;
-
-            var scale = target.localScale;
-            await target.DOScale(scale * 1.12f, _settings.PopupDuration * 0.5f).SetLoops(2, LoopType.Yoyo).Await(cancellation);
-            target.localScale = scale;
         }
 
         void Cue(SfxId id) => _sfx?.Play(id);

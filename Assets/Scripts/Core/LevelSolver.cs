@@ -132,7 +132,7 @@ namespace Game.Core
                             continue;
 
                         var order = sequence++;
-                        if (IsWinningExit(result.Events) && RulesEngine.ConfirmExtract(board).Accepted)
+                        if (IsWin(board))
                         {
                             var score = node.Moves + 1;
                             if (score < winScore || (score == winScore && order < winSequence))
@@ -213,7 +213,7 @@ namespace Game.Core
                         if (!result.Accepted)
                             continue;
 
-                        if (IsWinningExit(result.Events) && RulesEngine.ConfirmExtract(board).Accepted)
+                        if (IsWin(board))
                             return Win(nodes, index, lion, target, board.Alarm, seen.Count, watch);
 
                         if (board.Status == GameStatus.Lost)
@@ -245,30 +245,13 @@ namespace Game.Core
                 deficit = 0;
 
             var focus = key.Chest ? goal.Exit : goal.Chest;
-            return Approach(new CellPos(key.Ax, key.Ay), focus, level.Width, level.Height)
-                + Approach(new CellPos(key.Bx, key.By), focus, level.Width, level.Height)
+            return Manhattan(new CellPos(key.Ax, key.Ay), focus)
+                + Manhattan(new CellPos(key.Bx, key.By), focus)
                 + 2 * deficit;
         }
 
-        static int Approach(CellPos from, CellPos goal, int width, int height)
-        {
-            var best = int.MaxValue;
-            Consider(goal.X, goal.Y - 1);
-            Consider(goal.X + 1, goal.Y);
-            Consider(goal.X, goal.Y + 1);
-            Consider(goal.X - 1, goal.Y);
-            return best == int.MaxValue ? 0 : best;
-
-            void Consider(int x, int y)
-            {
-                if (x < 0 || y < 0 || x >= width || y >= height)
-                    return;
-
-                var distance = Math.Abs(from.X - x) + Math.Abs(from.Y - y);
-                if (distance < best)
-                    best = distance;
-            }
-        }
+        static int Manhattan(CellPos from, CellPos goal) =>
+            Math.Abs(from.X - goal.X) + Math.Abs(from.Y - goal.Y);
 
         static Goals FindGoals(LevelData level)
         {
@@ -303,15 +286,12 @@ namespace Game.Core
         static StateKey Capture(LevelData level, GameState state)
         {
             ulong removed = 0;
-            var chestOpen = false;
             var bit = 0;
             for (var y = 0; y < level.Height; y++)
             {
                 for (var x = 0; x < level.Width; x++)
                 {
                     var cell = state.CellAt(new CellPos(x, y));
-                    if (level.Cells[x, y].Item == ItemType.Chest)
-                        chestOpen = cell.IsOpen;
                     if (level.Cells[x, y].Item != ItemType.None && cell.Item == ItemType.None)
                         removed |= 1UL << bit;
                     bit++;
@@ -319,7 +299,6 @@ namespace Game.Core
             }
 
             return new StateKey(
-                chestOpen,
                 removed,
                 (byte)state.LionA.X,
                 (byte)state.LionA.Y,
@@ -343,7 +322,7 @@ namespace Game.Core
                 {
                     var cell = state.CellAt(new CellPos(x, y));
                     var original = level.Cells[x, y].Item;
-                    cell.IsOpen = original == ItemType.Chest && key.ChestOpen;
+                    cell.IsOpen = false;
                     if ((key.Removed & (1UL << bit)) != 0)
                     {
                         if (original == ItemType.Gold)
@@ -377,15 +356,12 @@ namespace Game.Core
             return gold;
         }
 
-        static bool IsWinningExit(IReadOnlyList<GameEvent> events)
+        static bool IsWin(GameState board)
         {
-            for (var i = 0; i < events.Count; i++)
-            {
-                if (events[i] is ExitAttempted attempt && attempt.ConditionsMet)
-                    return true;
-            }
+            if (board.Status != GameStatus.Playing || !RulesEngine.ExitConditionsMet(board))
+                return false;
 
-            return false;
+            return RulesEngine.ConfirmExtract(board).Accepted;
         }
 
         static SolveResult Win(List<Node> nodes, int parent, LionId lion, CellPos target, int alarm, int states, Stopwatch watch)
@@ -443,7 +419,6 @@ namespace Game.Core
 
         readonly struct StateKey : IEquatable<StateKey>
         {
-            public readonly bool ChestOpen;
             public readonly ulong Removed;
             public readonly byte Ax;
             public readonly byte Ay;
@@ -451,9 +426,8 @@ namespace Game.Core
             public readonly byte By;
             public readonly bool Chest;
 
-            public StateKey(bool chestOpen, ulong removed, byte ax, byte ay, byte bx, byte by, bool chest)
+            public StateKey(ulong removed, byte ax, byte ay, byte bx, byte by, bool chest)
             {
-                ChestOpen = chestOpen;
                 Removed = removed;
                 Ax = ax;
                 Ay = ay;
@@ -463,8 +437,7 @@ namespace Game.Core
             }
 
             public bool Equals(StateKey other) =>
-                ChestOpen == other.ChestOpen
-                && Removed == other.Removed
+                Removed == other.Removed
                 && Ax == other.Ax
                 && Ay == other.Ay
                 && Bx == other.Bx
@@ -477,8 +450,7 @@ namespace Game.Core
             {
                 unchecked
                 {
-                    var hash = ChestOpen ? 1 : 0;
-                    hash = hash * 397 ^ (int)Removed ^ (int)(Removed >> 32);
+                    var hash = (int)Removed ^ (int)(Removed >> 32);
                     hash = hash * 397 ^ Ax;
                     hash = hash * 397 ^ Ay;
                     hash = hash * 397 ^ Bx;

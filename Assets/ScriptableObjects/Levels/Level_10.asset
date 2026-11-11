@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Level_10
   m_EditorClassIdentifier: Game.Config::Game.Config.LevelConfig
   Number: 10
-  Map: At#t#B/#g#gtt/e#g##g/rrrrtr/rrrrtr/lgc###
-  AlarmThreshold: 14
+  Map: AggteB/g#tgl#/rrrrrr/rrrrtt/rrttrr/#c###g
+  AlarmThreshold: 18
   JumpCost: 2
   GateBreakCost: 3
   TrapCost: 4

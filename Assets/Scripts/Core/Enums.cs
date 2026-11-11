@@ -36,7 +36,6 @@ namespace Game.Core
         OutOfBounds,
         NotAdjacent,
         GameOver,
-        TargetIsChest,
         GateBlocksLionA,
         InvalidShape
     }
