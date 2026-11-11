@@ -178,11 +178,9 @@ namespace Game.View
                 }
             }
 
-            highlightRoot.SetAsLastSibling();
-            lionAToken.SetAsLastSibling();
-            lionBToken.SetAsLastSibling();
             FitToken(lionAToken, _catalog.Get(SpriteId.LionA_Token));
             FitToken(lionBToken, _catalog.Get(SpriteId.LionB_Token));
+            OrderTokens(_session.ActiveLion);
         }
 
         void Refresh(GameState state)
@@ -193,8 +191,9 @@ namespace Game.View
                 pair.Value.SetVisual(Ground(cell), ItemSprite(cell));
             }
 
-            PlaceToken(lionAToken, state.LionA);
-            PlaceToken(lionBToken, state.LionB);
+            PlaceToken(lionAToken, LionId.A, state);
+            PlaceToken(lionBToken, LionId.B, state);
+            OrderTokens(_session.ActiveLion);
             alarmLabel.text = state.Alarm + "/" + state.AlarmThreshold;
             alarmFill.fillAmount = FillOf(state.Alarm, state.AlarmThreshold);
             goldLabel.text = LootText(_session.CollectedCoins);
@@ -226,10 +225,13 @@ namespace Game.View
 
         async UniTask Play(CellPos pos)
         {
+            var startA = _session.State.LionA;
+            var startB = _session.State.LionB;
+            var wasReady = _session.ExitReady;
             var result = _session.TapCell(pos);
             if (!result.Accepted)
                 return;
-            await PlayEvents(result.Events);
+            await PlayEvents(result.Events, startA, startB, wasReady);
         }
 
         async UniTask OnExtract()
@@ -255,12 +257,14 @@ namespace Game.View
                 return;
             }
 
+            var startA = _session.State.LionA;
+            var startB = _session.State.LionB;
             var result = _session.TryExtract();
             if (result.Accepted)
-                await PlayEvents(result.Events);
+                await PlayEvents(result.Events, startA, startB, true);
         }
 
-        async UniTask PlayEvents(IReadOnlyList<GameEvent> events)
+        async UniTask PlayEvents(IReadOnlyList<GameEvent> events, CellPos startA, CellPos startB, bool exitWasReady)
         {
             _inputLocked = true;
             _moveAnimating = true;
@@ -272,8 +276,10 @@ namespace Game.View
             try
             {
                 Buzz(events);
-                await _player.Play(events, BuildStage(), cancellation.Token);
+                await _player.Play(events, BuildStage(), cancellation.Token, startA, startB);
                 Refresh(_session.State);
+                if (!exitWasReady && _session.ExitReady)
+                    await _player.Pulse(extractButton.transform, cancellation.Token);
                 if (_session.State.Status == GameStatus.Playing && !_pauseWhenIdle)
                     SetButtonsInteractable(true);
                 else if (_session.State.Status != GameStatus.Playing)
@@ -482,6 +488,9 @@ namespace Game.View
             {
                 Token = lion => lion == LionId.A ? lionAToken : lionBToken,
                 CellCenter = pos => _cells[pos].GetComponent<RectTransform>().anchoredPosition,
+                SlotAnchor = SlotAnchor,
+                SlotScale = SlotScale,
+                BringToFront = OrderTokens,
                 Cell = pos => _cells[pos],
                 SpriteFor = SpriteFor,
                 OpenSprite = _catalog.Get(SpriteId.Cell_Open),
@@ -500,8 +509,40 @@ namespace Game.View
             };
         }
 
-        void PlaceToken(RectTransform token, CellPos pos) =>
-            token.anchoredPosition = _cells[pos].GetComponent<RectTransform>().anchoredPosition;
+        void PlaceToken(RectTransform token, LionId lion, GameState state)
+        {
+            var pos = lion == LionId.A ? state.LionA : state.LionB;
+            var slot = TokenSlots.GetSlot(lion, state.LionA, state.LionB);
+            token.anchoredPosition = SlotAnchor(pos, slot);
+            token.localScale = SlotScale(slot);
+        }
+
+        Vector2 SlotAnchor(CellPos pos, TokenSlot slot)
+        {
+            var center = _cells[pos].GetComponent<RectTransform>().anchoredPosition;
+            var dx = 0f;
+            if (slot == TokenSlot.Left)
+                dx = -_settings.SharedTokenOffset * _cellSize;
+            else if (slot == TokenSlot.Right)
+                dx = _settings.SharedTokenOffset * _cellSize;
+            return new Vector2(center.x + dx, center.y);
+        }
+
+        Vector3 SlotScale(TokenSlot slot)
+        {
+            var fit = _cellSize / NativeCell;
+            var factor = slot == TokenSlot.Center ? 1f : _settings.SharedTokenScale;
+            return Vector3.one * (fit * factor);
+        }
+
+        void OrderTokens(LionId front)
+        {
+            highlightRoot.SetAsLastSibling();
+            var back = front == LionId.A ? lionBToken : lionAToken;
+            var top = front == LionId.A ? lionAToken : lionBToken;
+            back.SetAsLastSibling();
+            top.SetAsLastSibling();
+        }
 
         void FitToken(RectTransform token, Sprite sprite)
         {

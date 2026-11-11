@@ -16,6 +16,8 @@ namespace Game.View
         readonly GameSettingsConfig _settings;
         readonly SoundManager _sfx;
         bool _revealed;
+        CellPos _visualA;
+        CellPos _visualB;
 
         public EventPlayer(GameSettingsConfig settings, SoundManager sfx = null)
         {
@@ -23,9 +25,16 @@ namespace Game.View
             _sfx = sfx;
         }
 
-        public async UniTask Play(IReadOnlyList<GameEvent> events, PlayStage stage, CancellationToken cancellation)
+        public async UniTask Play(
+            IReadOnlyList<GameEvent> events,
+            PlayStage stage,
+            CancellationToken cancellation,
+            CellPos startA,
+            CellPos startB)
         {
             _revealed = false;
+            _visualA = startA;
+            _visualB = startB;
             for (var i = 0; i < events.Count; i++)
                 await PlayOne(events[i], stage, cancellation);
         }
@@ -36,7 +45,12 @@ namespace Game.View
             {
                 case LionMoved moved:
                     Cue(moved.IsJump ? SfxId.Jump : SfxId.Step);
-                    await MoveToken(stage.Token(moved.Lion), stage.CellCenter(moved.To), moved.IsJump, stage, cancellation);
+                    if (moved.Lion == LionId.A)
+                        _visualA = moved.To;
+                    else
+                        _visualB = moved.To;
+                    stage.BringToFront?.Invoke(moved.Lion);
+                    await ArrangeTokens(moved.Lion, moved.IsJump, stage, cancellation);
                     break;
                 case CellOpened opened:
                     Cue(SfxId.Open);
@@ -71,7 +85,7 @@ namespace Game.View
                     break;
                 case ChestTaken taken:
                     Cue(SfxId.Chest);
-                    await WaitToConsume(cancellation);
+                    await UniTask.Delay(TimeSpan.FromSeconds(_settings.ConsumePause), cancellationToken: cancellation);
                     await TakeChest(stage.Cell(taken.Pos), cancellation);
                     break;
                 case GameWon:
@@ -83,16 +97,34 @@ namespace Game.View
             }
         }
 
-        async UniTask MoveToken(RectTransform token, Vector2 target, bool jump, PlayStage stage, CancellationToken cancellation)
+        async UniTask ArrangeTokens(LionId mover, bool jump, PlayStage stage, CancellationToken cancellation)
         {
+            var slotA = TokenSlots.GetSlot(LionId.A, _visualA, _visualB);
+            var slotB = TokenSlots.GetSlot(LionId.B, _visualA, _visualB);
+            var tokenA = stage.Token(LionId.A);
+            var tokenB = stage.Token(LionId.B);
+            var moveA = MoveToken(tokenA, stage.SlotAnchor(_visualA, slotA), stage.SlotScale(slotA), mover == LionId.A && jump, stage, cancellation);
+            var moveB = MoveToken(tokenB, stage.SlotAnchor(_visualB, slotB), stage.SlotScale(slotB), mover == LionId.B && jump, stage, cancellation);
+            await UniTask.WhenAll(moveA, moveB);
+        }
+
+        async UniTask MoveToken(RectTransform token, Vector2 target, Vector3 targetScale, bool jump, PlayStage stage, CancellationToken cancellation)
+        {
+            var settled = Vector2.Distance(token.anchoredPosition, target) < 0.5f
+                && Vector3.Distance(token.localScale, targetScale) < 0.001f;
+            if (settled)
+                return;
+
             if (!jump)
             {
-                await token.DOAnchorPos(target, _settings.MoveDuration).SetEase(Ease.OutQuad).Await(cancellation);
+                await UniTask.WhenAll(
+                    token.DOAnchorPos(target, _settings.MoveDuration).SetEase(Ease.OutQuad).Await(cancellation),
+                    token.DOScale(targetScale, _settings.MoveDuration).SetEase(Ease.OutQuad).Await(cancellation));
                 return;
             }
 
             var start = token.anchoredPosition;
-            var scale = token.localScale;
+            var startScale = token.localScale;
             var height = stage.CellSize * 0.45f;
             await DOTween.To(() => 0f, t =>
             {
@@ -100,9 +132,10 @@ namespace Game.View
                 pos.y += Mathf.Sin(t * Mathf.PI) * height;
                 token.anchoredPosition = pos;
                 var bump = 1f + Mathf.Sin(t * Mathf.PI) * 0.12f;
-                token.localScale = scale * bump;
+                token.localScale = Vector3.Lerp(startScale, targetScale, t) * bump;
             }, 1f, _settings.MoveDuration).SetEase(Ease.Linear).Await(cancellation);
-            token.localScale = scale;
+            token.anchoredPosition = target;
+            token.localScale = targetScale;
         }
 
         async UniTask OpenCell(CellView cell, ItemType item, PlayStage stage, CancellationToken cancellation)
@@ -191,6 +224,16 @@ namespace Game.View
             rect.localScale = Vector3.one;
         }
 
+        public async UniTask Pulse(Transform target, CancellationToken cancellation)
+        {
+            if (target == null)
+                return;
+
+            var scale = target.localScale;
+            await target.DOScale(scale * 1.12f, _settings.PopupDuration * 0.5f).SetLoops(2, LoopType.Yoyo).Await(cancellation);
+            target.localScale = scale;
+        }
+
         void Cue(SfxId id) => _sfx?.Play(id);
 
     }
@@ -198,6 +241,9 @@ namespace Game.View
     public sealed class PlayStage
     {
         public System.Func<LionId, RectTransform> Token { get; set; }
+        public System.Func<CellPos, TokenSlot, Vector2> SlotAnchor { get; set; }
+        public System.Func<TokenSlot, Vector3> SlotScale { get; set; }
+        public System.Action<LionId> BringToFront { get; set; }
         public System.Func<CellPos, Vector2> CellCenter { get; set; }
         public System.Func<CellPos, CellView> Cell { get; set; }
         public System.Func<ItemType, Sprite> SpriteFor { get; set; }

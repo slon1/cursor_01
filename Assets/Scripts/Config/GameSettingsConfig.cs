@@ -12,6 +12,8 @@ namespace Game.Config
         public float ConsumePause = 0.2f;
         public int GoldPointsPerCoin = 100;
         public float HighlightAlpha = 0.5f;
+        public float SharedTokenScale = 0.75f;
+        public float SharedTokenOffset = 0.22f;
         public bool DefaultSoundOn = true;
         public bool DefaultMusicOn = true;
     }

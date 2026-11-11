@@ -19,5 +19,7 @@ MonoBehaviour:
   ConsumePause: 0.2
   GoldPointsPerCoin: 100
   HighlightAlpha: 0.5
+  SharedTokenScale: 0.75
+  SharedTokenOffset: 0.22
   DefaultSoundOn: 1
   DefaultMusicOn: 1
